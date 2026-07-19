@@ -1,0 +1,42 @@
+cat > content/reports/sistema-informes.md << 'EOF'
+# Sistema de Generació d'Informes
+
+Aquest document defineix com es generaran els informes d'incidències.
+
+## Tipus d'informes
+
+- **Informe diari**: resum de les incidències del dia actual.
+- **Informe setmanal**: resum de la setmana (dilluns a diumenge).
+- **Informe mensual**: resum del mes natural.
+
+## Estructura de l'informe
+
+Cada informe contindrà:
+
+- **Resum executiu**: nombre total d'incidències, distribució per tipus i estat.
+- **Detall per proveïdor**: llista de proveïdors amb més incidències.
+- **Gràfics** (opcional): evolució diària/setmanal/mensual.
+- **Llista d'incidències obertes**: les que encara no estan resoltes.
+- **Temps mitjà de resolució**: per a incidències tancades.
+
+## Format de sortida
+
+- **Markdown**: per a visualització ràpida.
+- **CSV**: per a anàlisi de dades.
+- **PDF**: per a enviar per correu (opcional).
+
+## Com s'utilitza?
+
+1. Seleccionar el període (dia/setmana/mes).
+2. El sistema recull les dades de la carpeta d'incidències.
+3. Genera l'informe en el format escollit.
+4. Es guarda a `reports/` amb el nom `informe-YYYY-MM-DD.md` (o setmana/mes).
+
+## Exemple d'ús
+
+```bash
+# Generar informe diari
+python scripts/generar-informe.py --period dia
+
+# Generar informe setmanal
+python scripts/generar-informe.py --period setmana --output pdf
