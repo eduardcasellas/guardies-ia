@@ -1,0 +1,107 @@
+mkdir -p content/html
+cat > content/html/historial-incidencies.html << 'EOF'
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial d'Incidències - Guardies-IA</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; color: #333; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { font-size: 1.8rem; margin-bottom: 20px; color: #1a1a2e; }
+        .filters { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .filter-group { display: flex; flex-direction: column; }
+        .filter-group label { font-size: 0.85rem; font-weight: 600; color: #555; margin-bottom: 5px; }
+        .filter-group input, .filter-group select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; font-size: 0.9rem; cursor: pointer; transition: background-color 0.2s; }
+        .btn-primary { background-color: #4361ee; color: white; }
+        .btn-primary:hover { background-color: #3a56d4; }
+        .btn-secondary { background-color: #e0e0e0; color: #333; }
+        .btn-secondary:hover { background-color: #d0d0d0; }
+        .filter-actions { display: flex; align-items: flex-end; gap: 10px; }
+        .table-container { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background-color: #f8f9fa; padding: 12px 15px; text-align: left; font-size: 0.85rem; font-weight: 600; color: #555; border-bottom: 2px solid #e0e0e0; }
+        td { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+        tr:hover { background-color: #f8f9fa; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .badge-priority-1 { background-color: #e63946; color: white; }
+        .badge-priority-2 { background-color: #f4a261; color: white; }
+        .badge-priority-3 { background-color: #e9c46a; color: #333; }
+        .badge-estat-oberta { background-color: #e63946; color: white; }
+        .badge-estat-en-curs { background-color: #f4a261; color: white; }
+        .badge-estat-resolta { background-color: #2a9d8f; color: white; }
+        .badge-estat-tancada { background-color: #6c757d; color: white; }
+        .side-panel { position: fixed; top: 0; right: -600px; width: 600px; max-width: 100%; height: 100%; background: white; box-shadow: -2px 0 10px rgba(0,0,0,0.1); transition: right 0.3s ease; z-index: 1000; overflow-y: auto; }
+        .side-panel.open { right: 0; }
+        .side-panel-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #e0e0e0; }
+        .side-panel-header h2 { font-size: 1.3rem; color: #1a1a2e; }
+        .side-panel-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #888; }
+        .side-panel-body { padding: 20px; }
+        .detail-field { margin-bottom: 15px; }
+        .detail-field label { display: block; font-size: 0.75rem; font-weight: 600; color: #888; text-transform: uppercase; margin-bottom: 3px; }
+        .detail-field .value { font-size: 0.95rem; color: #333; }
+        .photo-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
+        .photo-modal.open { display: flex; }
+        .photo-modal img { max-width: 90%; max-height: 90%; border-radius: 4px; }
+        .photo-modal .close { position: absolute; top: 20px; right: 30px; color: white; font-size: 2rem; cursor: pointer; background: none; border: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 Historial d'Incidències</h1>
+        <div class="filters">
+            <div class="filter-group"><label>ID o títol</label><input type="text" id="searchText" placeholder="Cerca..."></div>
+            <div class="filter-group"><label>Estat</label><select id="filterEstat"><option value="">Tots</option><option value="oberta">Oberta</option><option value="en curs">En curs</option><option value="resolta">Resolta</option><option value="tancada">Tancada</option></select></div>
+            <div class="filter-group"><label>Prioritat</label><select id="filterPrioritat"><option value="">Totes</option><option value="1">Crític</option><option value="2">Alt</option><option value="3">Mitjà</option><option value="4">Baix</option><option value="5">Trivial</option></select></div>
+            <div class="filter-actions"><button class="btn btn-secondary" onclick="aplicarFiltres()">Filtrar</button></div>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead><tr><th>ID</th><th>Títol</th><th>Prioritat</th><th>Estat</th><th>Ubicació</th><th>Data</th><th>Proveïdor</th><th>Accions</th></tr></thead>
+                <tbody id="incidentsBody">
+                    <tr><td>INC-001</td><td>Servidor web no respon</td><td><span class="badge badge-priority-1">Crític</span></td><td><span class="badge badge-estat-oberta">Oberta</span></td><td>Data Center</td><td>2026-07-20</td><td>FibraTel</td><td><button class="btn btn-primary btn-sm" onclick="veureDetall('INC-001')">Veure</button></td></tr>
+                    <tr><td>INC-002</td><td>Pantalla blava oficina 3B</td><td><span class="badge badge-priority-2">Alt</span></td><td><span class="badge badge-estat-en-curs">En curs</span></td><td>Oficina 3B</td><td>2026-07-19</td><td>Dell</td><td><button class="btn btn-primary btn-sm" onclick="veureDetall('INC-002')">Veure</button></td></tr>
+                    <tr><td>INC-003</td><td>Impressora no funciona</td><td><span class="badge badge-priority-3">Mitjà</span></td><td><span class="badge badge-estat-resolta">Resolta</span></td><td>Recepció</td><td>2026-07-18</td><td>HP</td><td><button class="btn btn-primary btn-sm" onclick="veureDetall('INC-003')">Veure</button></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Panell lateral -->
+    <div class="side-panel" id="sidePanel">
+        <div class="side-panel-header"><h2 id="detailTitle">Detall</h2><button class="side-panel-close" onclick="tancarPanel()">&times;</button></div>
+        <div class="side-panel-body" id="detailBody">Selecciona una incidència per veure el detall.</div>
+    </div>
+
+    <div class="photo-modal" id="photoModal" onclick="tancarModal()">
+        <button class="close" onclick="tancarModal()">&times;</button>
+        <img id="modalImage" src="" alt="Foto">
+    </div>
+
+    <script>
+        function veureDetall(id) {
+            document.getElementById('sidePanel').classList.add('open');
+            document.getElementById('detailTitle').textContent = 'Detall de ' + id;
+            document.getElementById('detailBody').innerHTML = '<div class="detail-field"><label>ID</label><div class="value">' + id + '</div></div><div class="detail-field"><label>Descripció</label><div class="value">Descripció de mostra per a ' + id + '.</div></div><div class="detail-field"><label>Fotos</label><div class="value"><img src="https://via.placeholder.com/100" onclick="obrirModal(this.src)" style="width:100px;height:100px;object-fit:cover;border-radius:4px;cursor:pointer;"></div></div>';
+        }
+        function tancarPanel() {
+            document.getElementById('sidePanel').classList.remove('open');
+        }
+        function obrirModal(src) {
+            document.getElementById('modalImage').src = src;
+            document.getElementById('photoModal').classList.add('open');
+        }
+        function tancarModal() {
+            document.getElementById('photoModal').classList.remove('open');
+        }
+        function aplicarFiltres() {
+            // Funció de filtratge simple (es podria millorar)
+            alert('Filtres aplicats (demo)');
+        }
+    </script>
+</body>
+</html>
+EOF

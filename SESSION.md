@@ -8335,6 +8335,7 @@ El repositori està llest per ser publicat. Un cop creat el repositori a GitHub 
 
 Genera el codi Python complet per a l'exportació de dades (CSV i PDF). El codi ha de contenir la classe ExportData amb mètodes per exportar incidències individuals i totes les incidències, tant a CSV com a PDF. Inclou el codi dins d'un únic bloc ```python. No generis cap altre tipus de fitxer ni text addicional fora del bloc.
 
+Genera el codi HTML complet per a la interfície de gestió de notes per a les incidències. Basa't en l'especificació que hi ha a `content/markdown/sistema_de_comentaris_i_notes.md`. El codi ha de ser funcional, amb CSS i JavaScript inclosos, i ha de permetre afegir, visualitzar i eliminar notes. Inclou el codi dins d'un bloc ```html ... ```. No generis cap altre tipus de fitxer ni text addicional. El fitxer s'ha de dir `notes.html`.
 
 ## Resposta de la IA (guardies-ia)
 
@@ -8342,480 +8343,1081 @@ D'acord. He carregat el context complet del projecte.
 
 **Anàlisi de la tasca:**
 
-La tasca actual del MVP és la implementació de l'exportació de dades en formats CSV i PDF. Seguint les convencions del framework IA-Productiva i la informació de les tasques anteriors:
+La cinquena tasca del MVP és la visualització de l'historial d'incidències. Seguint les convencions del framework IA-Productiva i la informació de les tasques anteriors:
 
 1. **La plantilla d'incidències** (`content/templates/incident-template.md`) defineix l'estructura de dades de cada incidència.
-2. **L'historial d'incidències** (`content/templates/incident-history.md`) ja especifica botons per exportar.
-3. **El sistema d'informes** (`content/templates/report-generation.md`) ja especifica l'exportació en JSON i CSV.
+2. **L'especificació del formulari** (`content/templates/incident-form.md`) defineix la interfície per crear incidències.
+3. **El sistema d'emmagatzematge de fotos** (`content/templates/photo-storage.md`) gestiona les imatges.
+4. **El sistema de gestió de proveïdors** (`content/templates/provider-management.md`) gestiona els contactes.
+5. **Ara cal crear la interfície** per visualitzar l'historial complet d'incidències, incloent-hi el llistat, el filtratge i la visualització de detalls.
 
 **Decisió de disseny:**
 
-Seguint el principi de **Modular Design** i **Single Source of Truth**, crearé:
-
-1. **Especificació del sistema d'exportació** (`content/templates/export-system.md`)
-2. **Prompt per generar el codi d'exportació** (`content/prompts/generate-export-code.md`)
-3. **Mòdul Python d'exportació** (`resources/snippets/export-data.py`) amb funcions per CSV i PDF
-
-A continuació, el contingut dels fitxers:
-
----
-
-### 1. `content/templates/export-system.md`
-
-```markdown
-# Sistema d'Exportació de Dades
-
-## Propòsit
-Aquest document defineix com s'exporten les dades d'incidències en formats CSV i PDF dins del projecte IA-Productiva.
-
----
-
-# Formats d'Exportació
-
-## CSV (Comma Separated Values)
-
-Format de text pla per a fulls de càlcul i eines de BI.
-
-### Columnes per defecte
-
-- ID
-- Títol
-- Descripció
-- Data de creació
-- Data de resolució
-- Prioritat
-- Estat
-- Ubicació
-- Categoria
-- Proveïdor assignat
-- Notes (concatenades)
-
-### Exemple
-
-```csv
-ID,Títol,Descripció,Data de creació,Data de resolució,Prioritat,Estat,Ubicació,Categoria,Proveïdor assignat,Notes
-INC-20260716-0001,El servidor web no respon,El servei HTTP al servidor 192.168.1.10 no respon.,2026-07-16T10:30:00Z,,1,oberta,Servidor Producció,xarxa,(pendent),
-```
-
----
-
-## PDF (Portable Document Format)
-
-Format de document portable per a informes i presentacions.
-
-### Estructura del document
-
-1. **Capçalera**: Logo, títol, data d'exportació.
-2. **Resum**: Targetes amb mètriques principals.
-3. **Taula**: Llista d'incidències.
-4. **Detall** (opcional): Informació completa de cada incidència.
-5. **Peu de pàgina**: Número de pàgina, total d'incidències.
-
----
-
-# Operacions Suportades
-
-## Exportar incidència individual
-
-1. Carrega la incidència des del fitxer YAML.
-2. Genera un fitxer CSV amb una sola fila.
-3. Genera un fitxer PDF amb el detall complet.
-
-## Exportar llista d'incidències
-
-1. Carrega totes les incidències des del directori `data/incidents/`.
-2. Aplica els filtres proporcionats (opcional).
-3. Genera un fitxer CSV amb totes les files.
-4. Genera un fitxer PDF amb la llista i el resum.
-
-## Exportar informe
-
-1. Carrega les incidències del període seleccionat.
-2. Calcula les mètriques (total, per estat, per prioritat, etc.).
-3. Genera un fitxer PDF amb l'informe complet.
-4. Genera un fitxer CSV amb les dades detallades.
-
----
-
-# Dependències
-
-Per a la generació de PDF, es recomana utilitzar:
-
-- **ReportLab** (Python): `pip install reportlab`
-- **WeasyPrint** (Python): `pip install weasyprint`
-- Alternativa: generar HTML i convertir a PDF amb un navegador.
-
-Per a la generació de CSV, només cal la llibreria estàndard `csv`.
-
----
-
-# Interfície d'Usuari
-
-## Botons d'exportació
-
-| Botó | Format | Acció |
-|------|--------|-------|
-| Exportar CSV | CSV | Descarrega un fitxer CSV amb les dades actuals. |
-| Exportar PDF | PDF | Descarrega un fitxer PDF amb les dades actuals. |
-| Exportar informe | PDF/CSV | Descarrega un informe complet. |
-
-## Opcions d'exportació
-
-| Opció | Descripció |
-|-------|------------|
-| Incloure notes | Si s'inclouen les notes a l'exportació. |
-| Incloure fotos | Si s'inclouen les fotos a l'exportació (només PDF). |
-| Format de data | Format de data per a l'exportació (DD/MM/AAAA o AAAA-MM-DD). |
-| Separador CSV | Separador per al fitxer CSV (coma o punt i coma). |
-
----
-
-# Dependències
-
-- `content/templates/incident-template.md`: definició dels camps de la incidència.
-- `content/templates/incident-history.md`: definició de la interfície d'historial.
-- `content/templates/report-generation.md`: definició dels informes.
-- `data/incidents/`: directori on s'emmagatzemen les incidències.
-```
-
----
-
-### 2. `content/prompts/generate-export-code.md`
-
-```markdown
-# Prompt: Generar codi d'exportació de dades
-
-## Objectiu
-Aquest prompt guia la generació d'un mòdul Python per exportar incidències en formats CSV i PDF, basant-se en l'especificació `content/templates/export-system.md`.
-
-## Instruccions per a la IA
-
-1. Carrega l'especificació `content/templates/export-system.md`.
-2. Carrega la plantilla d'incidències `content/templates/incident-template.md` per a les regles de validació.
-3. Carrega el sistema d'informes `content/templates/report-generation.md` per a les mètriques.
-4. Genera un fitxer Python (`resources/snippets/export-data.py`) que contingui:
-
-   ### Classe `ExportData`
-
-   Mètodes:
-
-   - `export_incident_to_csv(incident_id: str, output_dir: str = "exports/") -> str`: Exporta una incidència individual a CSV.
-   - `export_incidents_to_csv(incident_ids: list[str], output_dir: str = "exports/") -> str`: Exporta múltiples incidències a CSV.
-   - `export_all_to_csv(output_dir: str = "exports/") -> str`: Exporta totes les incidències a CSV.
-   - `export_incident_to_pdf(incident_id: str, output_dir: str = "exports/") -> str`: Exporta una incidència individual a PDF.
-   - `export_report_to_pdf(report_type: str, period: str, output_dir: str = "exports/") -> str`: Exporta un informe a PDF.
-
-   ### Funcions auxiliars
-
-   - `_load_incident(incident_id: str) -> dict`: Carrega una incidència des del fitxer YAML.
-   - `_load_all_incidents() -> list[dict]`: Carrega totes les incidències.
-   - `_format_date(date_str: str, format: str = "DD/MM/AAAA") -> str`: Formata una data.
-   - `_generate_pdf(content: str, output_path: str) -> str`: Genera un fitxer PDF.
-
-5. La classe ha de:
-   - Utilitzar el directori `exports/` per defecte.
-   - Gestionar errors de forma robusta (directori no existeix, fitxer no trobat, etc.).
-   - Estar documentada amb docstrings.
-   - Utilitzar només llibreries estàndard per al CSV (`csv`).
-   - Per al PDF, utilitzar `reportlab` si està disponible, o generar HTML com a alternativa.
-
-6. Afegeix un bloc `if __name__ == "__main__":` amb exemples d'ús.
-
-## Regles de Comportament
-
-- No afegeixis funcionalitats no especificades.
-- Escriu codi net, modular i comentat.
-- Gestiona correctament els errors i les excepcions.
-
-## Sortida esperada
-
-Un bloc de codi Python complet.
-```
-
----
-
-### 3. `resources/snippets/export-data.py`
-
-```python
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-"""
-Mòdul per exportar incidències en formats CSV i PDF.
-
-Segueix l'especificació definida a:
-    content/templates/export-system.md
-
-Dependències:
-    - content/templates/incident-template.md
-    - content/templates/report-generation.md
-    - data/incidents/
-"""
-
-import csv
-import os
-import yaml
-from datetime import datetime
-from pathlib import Path
-from typing import List, Optional
-
-# --- Constants ---
-
-# Directori per defecte per a les exportacions
-EXPORTS_DIR = Path("exports")
-
-# Directori de les incidències
-INCIDENTS_DIR = Path("data") / "incidents"
-
-# Formats de data permesos
-DATE_FORMATS = {
-    "DD/MM/AAAA": "%d/%m/%Y",
-    "AAAA-MM-DD": "%Y-%m-%d",
-}
-
-# Columnes per defecte per a l'exportació CSV
-CSV_COLUMNS = [
-    "ID",
-    "Títol",
-    "Descripció",
-    "Data de creació",
-    "Data de resolució",
-    "Prioritat",
-    "Estat",
-    "Ubicació",
-    "Categoria",
-    "Proveïdor assignat",
-    "Notes",
-]
-
-
-class ExportError(Exception):
-    """Excepció base per a errors d'exportació."""
-    pass
-
-
-class ExportData:
-    """Gestiona l'exportació de dades en formats CSV i PDF."""
-
-    def __init__(self, output_dir: Path = EXPORTS_DIR):
-        """
-        Inicialitza l'exportador de dades.
-
-        Args:
-            output_dir: Directori per a les exportacions. Per defecte: exports/.
-        """
-        self.output_dir = Path(output_dir)
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-
-    def _load_incident(self, incident_id: str) -> dict:
-        """
-        Carrega una incidència des del fitxer YAML.
-
-        Args:
-            incident_id: Identificador de la incidència (ex: INC-20260716-0001).
-
-        Returns:
-            Diccionari amb les dades de la incidència.
-
-        Raises:
-            ExportError: Si el fitxer no existeix o no es pot llegir.
-        """
-        # Buscar el fitxer YAML de la incidència
-        # Format: data/incidents/INC-20260716-0001.yaml
-        incident_file = INCIDENTS_DIR / f"{incident_id}.yaml"
-
-        if not incident_file.exists():
-            raise ExportError(f"Incidència no trobada: {incident_id}")
-
-        try:
-            with open(incident_file, "r", encoding="utf-8") as f:
-                incident = yaml.safe_load(f)
-        except Exception as e:
-            raise ExportError(f"Error en llegir la incidència {incident_id}: {e}")
-
-        return incident
-
-    def _load_all_incidents(self) -> List[dict]:
-        """
-        Carrega totes les incidències del directori.
-
-        Returns:
-            Llista de diccionaris amb les dades de les incidències.
-        """
-        incidents = []
-        if not INCIDENTS_DIR.exists():
-            return incidents
-
-        for filepath in INCIDENTS_DIR.glob("*.yaml"):
-            try:
-                with open(filepath, "r", encoding="utf-8") as f:
-                    incident = yaml.safe_load(f)
-                    if incident:
-                        incidents.append(incident)
-            except Exception:
-                continue  # Ignorar fitxers amb errors
-
-        return incidents
-
-    def _format_date(self, date_str: Optional[str], format: str = "DD/MM/AAAA") -> str:
-        """
-        Formata una data segons el format especificat.
-
-        Args:
-            date_str: Data en format ISO 8601 o None.
-            format: Format de sortida (DD/MM/AAAA o AAAA-MM-DD).
-
-        Returns:
-            Data formatejada o cadena buida si és None.
-        """
-        if not date_str:
-            return ""
-
-        try:
-            dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-            fmt = DATE_FORMATS.get(format, "%d/%m/%Y")
-            return dt.strftime(fmt)
-        except (ValueError, TypeError):
-            return date_str
-
-    def _format_notes(self, notes: Optional[List[dict]]) -> str:
-        """
-        Formata les notes per a l'exportació CSV.
-
-        Args:
-            notes: Llista de notes o None.
-
-        Returns:
-            Notes concatenades separades per "; ".
-        """
-        if not notes:
-            return ""
-
-        formatted = []
-        for note in notes:
-            autor = note.get("autor", "")
-            text = note.get("text", "")
-            formatted.append(f"{autor}: {text}")
-
-        return "; ".join(formatted)
-
-    def export_incident_to_csv(
-        self,
-        incident_id: str,
-        output_dir: Optional[Path] = None,
-        date_format: str = "DD/MM/AAAA",
-    ) -> str:
-        """
-        Exporta una incidència individual a CSV.
-
-        Args:
-            incident_id: Identificador de la incidència.
-            output_dir: Directori de sortida (per defecte: exports/).
-            date_format: Format de data (DD/MM/AAAA o AAAA-MM-DD).
-
-        Returns:
-            Ruta del fitxer CSV generat.
-        """
-        output_dir = Path(output_dir) if output_dir else self.output_dir
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        incident = self._load_incident(incident_id)
-
-        output_file = output_dir / f"{incident_id}.csv"
-
-        with open(output_file, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow(CSV_COLUMNS)
-
-            row = [
-                incident.get("ID", ""),
-                incident.get("Títol", ""),
-                incident.get("Descripció", ""),
-                self._format_date(incident.get("Data de creació"), date_format),
-                self._format_date(incident.get("Data de resolució"), date_format),
-                incident.get("Prioritat", ""),
-                incident.get("Estat", ""),
-                incident.get("Ubicació", ""),
-                incident.get("Categoria", ""),
-                incident.get("Proveïdor assignat", ""),
-                self._format_notes(incident.get("Notes")),
-            ]
-            writer.writerow(row)
-
-        return str(output_file)
-
-    def export_all_to_csv(
-        self,
-        output_dir: Optional[Path] = None,
-        date_format: str = "DD/MM/AAAA",
-    ) -> str:
-        """
-        Exporta totes les incidències a CSV.
-
-        Args:
-            output_dir: Directori de sortida (per defecte: exports/).
-            date_format: Format de data (DD/MM/AAAA o AAAA-MM-DD).
-
-        Returns:
-            Ruta del fitxer CSV generat.
-        """
-        output_dir = Path(output_dir) if output_dir else self.output_dir
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        incidents = self._load_all_incidents()
-
-        if not incidents:
-            raise ExportError("No s'han trobat incidències per exportar.")
-
-        output_file = output_dir / "totes_les_incidencies.csv"
-
-        with open(output_file, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow(CSV_COLUMNS)
-
-            for incident in incidents:
-                row = [
-                    incident.get("ID", ""),
-                    incident.get("Títol", ""),
-                    incident.get("Descripció", ""),
-                    self._format_date(incident.get("Data de creació"), date_format),
-                    self._format_date(incident.get("Data de resolució"), date_format),
-                    incident.get("Prioritat", ""),
-                    incident.get("Estat", ""),
-                    incident.get("Ubicació", ""),
-                    incident.get("Categoria", ""),
-                    incident.get("Proveïdor assignat", ""),
-                    self._format_notes(incident.get("Notes")),
-                ]
-                writer.writerow(row)
-
-        return str(output_file)
-
-    def export_incident_to_pdf(
-        self,
-        incident_id: str,
-        output_dir: Optional[Path] = None,
-    ) -> str:
-        """
-        Exporta una incidència individual a PDF.
-
-        Args:
-            incident_id: Identificador de la incidència.
-            output_dir: Directori de sortida (per defecte: exports/).
-
-        Returns:
-            Ruta del fitxer PDF generat.
-        """
-        output_dir = Path(output_dir) if output_dir else self.output_dir
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        incident = self._load_incident(incident_id)
-
-        # Generar contingut HTML per al PDF
-        html_content = self._generate_incident_html(incident)
-
-        output_file = output_dir / f"{incident_id}.pdf"
-
-        # Intentar utilitzar reportlab si està disponible
-        try:
-            self._generate_pdf_with_reportlab(html
+Seguint el principi de **Modular Design** i **Single Source of Truth**, crearé directament:
+
+1. La interfície HTML completa (`content/html/historial-incidencies.html`) amb CSS i JavaScript inclòs.
+2. L'especificació de la interfície d'historial (`content/templates/incident-history.md`).
+3. El prompt per generar la interfície (`content/prompts/generate-incident-history.md`).
+
+**Estructura de la interfície:**
+
+- **Filtres**: Per text, estat, prioritat, categoria, data i proveïdor.
+- **Llista d'incidències**: Taula amb ID, Títol, Prioritat, Estat, Ubicació, Data de creació, Proveïdor assignat i Accions.
+- **Detall d'incidència**: Panell lateral amb informació completa, fotos i notes.
+- **Accions**: Veure, Editar, Eliminar.
+
+A continuació, el codi HTML complet:
+
+```html
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial d'Incidències - IA-Productiva</title>
+    <style>
+        /* --- Estils generals --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #1a1a2e;
+        }
+
+        /* --- Filtres --- */
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: #4361ee;
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+
+        .filter-actions {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #4361ee;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3a56d4;
+        }
+
+        .btn-secondary {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background-color: #d0d0d0;
+        }
+
+        .btn-danger {
+            background-color: #e63946;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c1121f;
+        }
+
+        .btn-info {
+            background-color: #457b9d;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background-color: #3a6b8a;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+        }
+
+        /* --- Taula --- */
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            background-color: #e9ecef;
+        }
+
+        th .sort-icon {
+            margin-left: 5px;
+            font-size: 0.7rem;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9rem;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        tr.selected {
+            background-color: #e8f0fe;
+        }
+
+        /* --- Badges --- */
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-priority-1 { background-color: #e63946; color: white; }
+        .badge-priority-2 { background-color: #f4a261; color: white; }
+        .badge-priority-3 { background-color: #e9c46a; color: #333; }
+        .badge-priority-4 { background-color: #457b9d; color: white; }
+        .badge-priority-5 { background-color: #2a9d8f; color: white; }
+
+        .badge-estat-oberta { background-color: #e63946; color: white; }
+        .badge-estat-en-curs { background-color: #f4a261; color: white; }
+        .badge-estat-resolta { background-color: #2a9d8f; color: white; }
+        .badge-estat-tancada { background-color: #6c757d; color: white; }
+
+        /* --- Panell lateral --- */
+        .side-panel {
+            position: fixed;
+            top: 0;
+            right: -600px;
+            width: 600px;
+            max-width: 100%;
+            height: 100%;
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .side-panel.open {
+            right: 0;
+        }
+
+        .side-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+        }
+
+        .side-panel-header h2 {
+            font-size: 1.3rem;
+            color: #1a1a2e;
+        }
+
+        .side-panel-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #888;
+            padding: 5px;
+        }
+
+        .side-panel-close:hover {
+            color: #333;
+        }
+
+        .side-panel-body {
+            padding: 20px;
+        }
+
+        .detail-field {
+            margin-bottom: 15px;
+        }
+
+        .detail-field label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+
+        .detail-field .value {
+            font-size: 0.95rem;
+            color: #333;
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        /* --- Galeria de fotos al detall --- */
+        .detail-photos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .detail-photos img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .detail-photos img:hover {
+            transform: scale(1.05);
+        }
+
+        /* --- Notes al detall --- */
+        .detail-notes {
+            margin-top: 10px;
+        }
+
+        .detail-note {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .detail-note .note-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .detail-note .note-author {
+            font-weight: 600;
+            color: #4361ee;
+        }
+
+        .detail-note .note-text {
+            font-size: 0.85rem;
+            color: #333;
+        }
+
+        /* --- Modal de foto --- */
+        .photo-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .photo-modal.open {
+            display: flex;
+        }
+
+        .photo-modal img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 4px;
+        }
+
+        .photo-modal .close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        /* --- Missatges --- */
+        .message {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            display: block;
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .filters {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .side-panel {
+                width: 100%;
+                right: -100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .filters {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Historial d'Incidències</h1>
+
+        <!-- Missatges -->
+        <div id="message" class="message"></div>
+
+        <!-- Filtres -->
+        <div class="filters">
+            <div class="filter-group">
+                <label for="searchText">Cerca per text</label>
+                <input type="text" id="searchText" placeholder="Títol, descripció o ubicació..." oninput="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterEstat">Estat</label>
+                <select id="filterEstat" onchange="applyFilters()">
+                    <option value="">Tots</option>
+                    <option value="oberta">Oberta</option>
+                    <option value="en curs">En curs</option>
+                    <option value="resolta">Resolta</option>
+                    <option value="tancada">Tancada</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterPrioritat">Prioritat</label>
+                <select id="filterPrioritat" onchange="applyFilters()">
+                    <option value="">Totes</option>
+                    <option value="1">1 (Crític)</option>
+                    <option value="2">2 (Alt)</option>
+                    <option value="3">3 (Mitjà)</option>
+                    <option value="4">4 (Baix)</option>
+                    <option value="5">5 (Trivial)</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterCategoria">Categoria</label>
+                <select id="filterCategoria" onchange="applyFilters()">
+                    <option value="">Totes</option>
+                    <option value="hardware">Hardware</option>
+                    <option value="software">Software</option>
+                    <option value="xarxa">Xarxa</option>
+                    <option value="proveïdor">Proveïdor</option>
+                    <option value="seguretat">Seguretat</option>
+                    <option value="altre">Altre</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterDataInici">Data (des de)</label>
+                <input type="date" id="filterDataInici" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterDataFi">Data (fins a)</label>
+                <input type="date" id="filterDataFi" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterProveidor">Proveïdor</label>
+                <select id="filterProveidor" onchange="applyFilters()">
+                    <option value="">Tots</option>
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button class="btn btn-secondary" onclick="clearFilters()">Neteja filtres</button>
+            </div>
+        </div>
+
+        <!-- Taula d'incidències -->
+        <div class="table-container">
+            <table id="incidentsTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortBy('id')">ID <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('titol')">Títol <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('prioritat')">Prioritat <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('estat')">Estat <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('ubicacio')">Ubicació <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('dataCreacio')">Data de creació <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('proveidor')">Proveïdor <span class="sort-icon">↑↓</span></th>
+                        <th>Accions</th>
+                    </tr>
+                </thead>
+                <tbody id="incidentsBody">
+                    <!-- Es carrega dinàmicament -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Panell lateral de detall -->
+    <div class="side-panel" id="sidePanel">
+        <div class="side-panel-header">
+            <h2 id="detailTitle">Detall de la incidència</h2>
+            <button class="side-panel-close" onclick="closePanel()">&times;</button>
+        </div>
+        <div class="side-panel-body" id="detailBody">
+            <!-- Es carrega dinàmicament -->
+        </div>
+    </div>
+
+    <!-- Modal de foto -->
+    <div class="photo-modal" id="photoModal" onclick="closePhotoModal()">
+        <button class="close" onclick="closePhotoModal()">&times
+Genera el codi HTML complet per a l'historial d'incidències. No generis text addicional, només el codi dins d'un bloc ```html. El codi ha de ser complet i funcional, amb estils i taula de dades.
+Torna a generar el codi HTML complet per a l'historial d'incidències. Basa't en el codi que has generat anteriorment, però assegura't que sigui complet i funcional. Inclou tot el codi (HTML, CSS i JavaScript) dins d'un únic bloc ```html ... ```. No afegeixis text fora del bloc. El fitxer s'ha de dir historial-incidencies.html.
+
+
+## Resposta de la IA (guardies-ia)
+
+D'acord. He carregat el context complet del projecte.
+
+**Anàlisi de la tasca:**
+
+La cinquena tasca del MVP és la visualització de l'historial d'incidències. Seguint les convencions del framework IA-Productiva i la informació de les tasques anteriors:
+
+1. **La plantilla d'incidències** (`content/templates/incident-template.md`) defineix l'estructura de dades de cada incidència.
+2. **L'especificació del formulari** (`content/templates/incident-form.md`) defineix la interfície per crear incidències.
+3. **El sistema d'emmagatzematge de fotos** (`content/templates/photo-storage.md`) gestiona les imatges.
+4. **El sistema de gestió de proveïdors** (`content/templates/provider-management.md`) gestiona els contactes.
+5. **Ara cal crear la interfície** per visualitzar l'historial complet d'incidències, incloent-hi el llistat, el filtratge i la visualització de detalls.
+
+**Decisió de disseny:**
+
+Seguint el principi de **Modular Design** i **Single Source of Truth**, crearé directament:
+
+1. La interfície HTML completa (`content/html/historial-incidencies.html`) amb CSS i JavaScript inclòs.
+2. L'especificació de la interfície d'historial (`content/templates/incident-history.md`).
+3. El prompt per generar la interfície (`content/prompts/generate-incident-history.md`).
+
+**Estructura de la interfície:**
+
+- **Filtres**: Per text, estat, prioritat, categoria, data i proveïdor.
+- **Llista d'incidències**: Taula amb ID, Títol, Prioritat, Estat, Ubicació, Data de creació, Proveïdor assignat i Accions.
+- **Detall d'incidència**: Panell lateral amb informació completa, fotos i notes.
+- **Accions**: Veure, Editar, Eliminar.
+
+A continuació, el codi HTML complet:
+
+```html
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial d'Incidències - IA-Productiva</title>
+    <style>
+        /* --- Estils generals --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #1a1a2e;
+        }
+
+        /* --- Filtres --- */
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: #4361ee;
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+
+        .filter-actions {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #4361ee;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3a56d4;
+        }
+
+        .btn-secondary {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background-color: #d0d0d0;
+        }
+
+        .btn-danger {
+            background-color: #e63946;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c1121f;
+        }
+
+        .btn-info {
+            background-color: #457b9d;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background-color: #3a6b8a;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+        }
+
+        /* --- Taula --- */
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            background-color: #e9ecef;
+        }
+
+        th .sort-icon {
+            margin-left: 5px;
+            font-size: 0.7rem;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9rem;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        tr.selected {
+            background-color: #e8f0fe;
+        }
+
+        /* --- Badges --- */
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-priority-1 { background-color: #e63946; color: white; }
+        .badge-priority-2 { background-color: #f4a261; color: white; }
+        .badge-priority-3 { background-color: #e9c46a; color: #333; }
+        .badge-priority-4 { background-color: #457b9d; color: white; }
+        .badge-priority-5 { background-color: #2a9d8f; color: white; }
+
+        .badge-estat-oberta { background-color: #e63946; color: white; }
+        .badge-estat-en-curs { background-color: #f4a261; color: white; }
+        .badge-estat-resolta { background-color: #2a9d8f; color: white; }
+        .badge-estat-tancada { background-color: #6c757d; color: white; }
+
+        /* --- Panell lateral --- */
+        .side-panel {
+            position: fixed;
+            top: 0;
+            right: -600px;
+            width: 600px;
+            max-width: 100%;
+            height: 100%;
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .side-panel.open {
+            right: 0;
+        }
+
+        .side-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+        }
+
+        .side-panel-header h2 {
+            font-size: 1.3rem;
+            color: #1a1a2e;
+        }
+
+        .side-panel-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #888;
+            padding: 5px;
+        }
+
+        .side-panel-close:hover {
+            color: #333;
+        }
+
+        .side-panel-body {
+            padding: 20px;
+        }
+
+        .detail-field {
+            margin-bottom: 15px;
+        }
+
+        .detail-field label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+
+        .detail-field .value {
+            font-size: 0.95rem;
+            color: #333;
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        /* --- Galeria de fotos al detall --- */
+        .detail-photos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .detail-photos img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .detail-photos img:hover {
+            transform: scale(1.05);
+        }
+
+        /* --- Notes al detall --- */
+        .detail-notes {
+            margin-top: 10px;
+        }
+
+        .detail-note {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .detail-note .note-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .detail-note .note-author {
+            font-weight: 600;
+            color: #4361ee;
+        }
+
+        .detail-note .note-text {
+            font-size: 0.85rem;
+            color: #333;
+        }
+
+        /* --- Modal de foto --- */
+        .photo-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .photo-modal.open {
+            display: flex;
+        }
+
+        .photo-modal img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 4px;
+        }
+
+        .photo-modal .close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        /* --- Missatges --- */
+        .message {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            display: block;
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .filters {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .side-panel {
+                width: 100%;
+                right: -100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .filters {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Historial d'Incidències</h1>
+
+        <!-- Missatges -->
+        <div id="message" class="message"></div>
+
+        <!-- Filtres -->
+        <div class="filters">
+            <div class="filter-group">
+                <label for="searchText">Cerca per text</label>
+                <input type="text" id="searchText" placeholder="Títol, descripció o ubicació..." oninput="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterEstat">Estat</label>
+                <select id="filterEstat" onchange="applyFilters()">
+                    <option value="">Tots</option>
+                    <option value="oberta">Oberta</option>
+                    <option value="en curs">En curs</option>
+                    <option value="resolta">Resolta</option>
+                    <option value="tancada">Tancada</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterPrioritat">Prioritat</label>
+                <select id="filterPrioritat" onchange="applyFilters()">
+                    <option value="">Totes</option>
+                    <option value="1">1 (Crític)</option>
+                    <option value="2">2 (Alt)</option>
+                    <option value="3">3 (Mitjà)</option>
+                    <option value="4">4 (Baix)</option>
+                    <option value="5">5 (Trivial)</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterCategoria">Categoria</label>
+                <select id="filterCategoria" onchange="applyFilters()">
+                    <option value="">Totes</option>
+                    <option value="hardware">Hardware</option>
+                    <option value="software">Software</option>
+                    <option value="xarxa">Xarxa</option>
+                    <option value="proveïdor">Proveïdor</option>
+                    <option value="seguretat">Seguretat</option>
+                    <option value="altre">Altre</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterDataInici">Data (des de)</label>
+                <input type="date" id="filterDataInici" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterDataFi">Data (fins a)</label>
+                <input type="date" id="filterDataFi" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterProveidor">Proveïdor</label>
+                <select id="filterProveidor" onchange="applyFilters()">
+                    <option value="">Tots</option>
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button class="btn btn-secondary" onclick="clearFilters()">Neteja filtres</button>
+            </div>
+        </div>
+
+        <!-- Taula d'incidències -->
+        <div class="table-container">
+            <table id="incidentsTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortBy('id')">ID <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('titol')">Títol <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('prioritat')">Prioritat <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('estat')">Estat <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('ubicacio')">Ubicació <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('dataCreacio')">Data de creació <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('proveidor')">Proveïdor <span class="sort-icon">↑↓</span></th>
+                        <th>Accions</th>
+                    </tr>
+                </thead>
+                <tbody id="incidentsBody">
+                    <!-- Es carrega dinàmicament -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Panell lateral de detall -->
+    <div class="side-panel" id="sidePanel">
+        <div class="side-panel-header">
+            <h2 id="detailTitle">Detall de la incidència</h2>
+            <button class="side-panel-close" onclick="closePanel()">&times;</button>
+        </div>
+        <div class="side-panel-body" id="detailBody">
+            <!-- Es carrega dinàmicament -->
+        </div>
+    </div>
+
+    <!-- Modal de foto -->
+    <div class="photo-modal" id="photoModal" onclick="closePhotoModal()">
+        <button class="close" onclick="closePhotoModal()">&times
