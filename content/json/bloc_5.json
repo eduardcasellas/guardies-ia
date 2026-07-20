@@ -1,9 +1,0 @@
-{
-  "titol": "El servidor web no respon",
-  "descripcio": "El servei HTTP al servidor 192.168.1.10 no respon.",
-  "prioritat": 1,
-  "estat": "oberta",
-  "ubicacio": "Servidor Producció",
-  "categoria": "xarxa",
-  "proveidor_assignat": null
-}
