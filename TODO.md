@@ -6,16 +6,16 @@
 - [x] Crear formulari per introduir incidències
 - [x] Sistema d'emmagatzematge de fotos
 - [x] Gestió de contactes de proveïdors (nom, telèfon, especialitat)
-- [ ] Visualització de l'historial d'incidències
-- [ ] Generació d'informes per dia/setmana/mes
-- [ ] Interfície per penjar i veure fotos
-- [ ] Sistema de comentaris o notes
-- [ ] Exportació de dades (CSV, PDF)
+- [x] Visualització de l'historial d'incidències
+- [x] Generació d'informes per dia/setmana/mes
+- [x] Interfície per penjar i veure fotos
+- [x] Sistema de comentaris o notes
+- [x] Exportació de dades (CSV, PDF)
 - [x] Publicar el repositori
 
 ## Millores futures
 
-- [ ] Notificacions per correu o Telegram
-- [ ] Integració amb calendari
-- [ ] Estadístiques i gràfics
-- [ ] API per a integracions externes
+- [x] Notificacions per correu o Telegram
+- [x] Integració amb calendari
+- [x] Estadístiques i gràfics
+- [x] API per a integracions externes

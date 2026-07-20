@@ -8333,9 +8333,552 @@ S'ha escollit l'Opció A.
 
 El repositori està llest per ser publicat. Un cop creat el repositori a GitHub i executats els comandaments git, el projecte serà accessible per a tothom.
 
-Genera el codi Python complet per a l'exportació de dades (CSV i PDF). El codi ha de contenir la classe ExportData amb mètodes per exportar incidències individuals i totes les incidències, tant a CSV com a PDF. Inclou el codi dins d'un únic bloc ```python. No generis cap altre tipus de fitxer ni text addicional fora del bloc.
 
-Genera el codi HTML complet per a la interfície de gestió de notes per a les incidències. Basa't en l'especificació que hi ha a `content/markdown/sistema_de_comentaris_i_notes.md`. El codi ha de ser funcional, amb CSS i JavaScript inclosos, i ha de permetre afegir, visualitzar i eliminar notes. Inclou el codi dins d'un bloc ```html ... ```. No generis cap altre tipus de fitxer ni text addicional. El fitxer s'ha de dir `notes.html`.
+
+## Resposta de la IA (guardies-ia)
+
+D'acord. He carregat el context complet del projecte.
+
+**Anàlisi de la tasca:**
+
+La cinquena tasca del MVP és la visualització de l'historial d'incidències. Seguint les convencions del framework IA-Productiva i la informació de les tasques anteriors:
+
+1. **La plantilla d'incidències** (`content/templates/incident-template.md`) defineix l'estructura de dades de cada incidència.
+2. **L'especificació del formulari** (`content/templates/incident-form.md`) defineix la interfície per crear incidències.
+3. **El sistema d'emmagatzematge de fotos** (`content/templates/photo-storage.md`) gestiona les imatges.
+4. **El sistema de gestió de proveïdors** (`content/templates/provider-management.md`) gestiona els contactes.
+5. **Ara cal crear la interfície** per visualitzar l'historial complet d'incidències, incloent-hi el llistat, el filtratge i la visualització de detalls.
+
+**Decisió de disseny:**
+
+Seguint el principi de **Modular Design** i **Single Source of Truth**, crearé directament:
+
+1. La interfície HTML completa (`content/html/historial-incidencies.html`) amb CSS i JavaScript inclòs.
+2. L'especificació de la interfície d'historial (`content/templates/incident-history.md`).
+3. El prompt per generar la interfície (`content/prompts/generate-incident-history.md`).
+
+
+
+**Estructura de la interfície:**
+
+- **Filtres**: Per text, estat, prioritat, categoria, data i proveïdor.
+- **Llista d'incidències**: Taula amb ID, Títol, Prioritat, Estat, Ubicació, Data de creació, Proveïdor assignat i Accions.
+- **Detall d'incidència**: Panell lateral amb informació completa, fotos i notes.
+- **Accions**: Veure, Editar, Eliminar.
+
+A continuació, el codi HTML complet:
+
+```html
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial d'Incidències - IA-Productiva</title>
+    <style>
+        /* --- Estils generals --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #1a1a2e;
+        }
+
+        /* --- Filtres --- */
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: #4361ee;
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+
+        .filter-actions {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #4361ee;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3a56d4;
+        }
+
+        .btn-secondary {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background-color: #d0d0d0;
+        }
+
+        .btn-danger {
+            background-color: #e63946;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c1121f;
+        }
+
+        .btn-info {
+            background-color: #457b9d;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background-color: #3a6b8a;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+        }
+
+        /* --- Taula --- */
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            background-color: #e9ecef;
+        }
+
+        th .sort-icon {
+            margin-left: 5px;
+            font-size: 0.7rem;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9rem;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        tr.selected {
+            background-color: #e8f0fe;
+        }
+
+        /* --- Badges --- */
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-priority-1 { background-color: #e63946; color: white; }
+        .badge-priority-2 { background-color: #f4a261; color: white; }
+        .badge-priority-3 { background-color: #e9c46a; color: #333; }
+        .badge-priority-4 { background-color: #457b9d; color: white; }
+        .badge-priority-5 { background-color: #2a9d8f; color: white; }
+
+        .badge-estat-oberta { background-color: #e63946; color: white; }
+        .badge-estat-en-curs { background-color: #f4a261; color: white; }
+        .badge-estat-resolta { background-color: #2a9d8f; color: white; }
+        .badge-estat-tancada { background-color: #6c757d; color: white; }
+
+        /* --- Panell lateral --- */
+        .side-panel {
+            position: fixed;
+            top: 0;
+            right: -600px;
+            width: 600px;
+            max-width: 100%;
+            height: 100%;
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .side-panel.open {
+            right: 0;
+        }
+
+        .side-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+        }
+
+        .side-panel-header h2 {
+            font-size: 1.3rem;
+            color: #1a1a2e;
+        }
+
+        .side-panel-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #888;
+            padding: 5px;
+        }
+
+        .side-panel-close:hover {
+            color: #333;
+        }
+
+        .side-panel-body {
+            padding: 20px;
+        }
+
+        .detail-field {
+            margin-bottom: 15px;
+        }
+
+        .detail-field label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+
+        .detail-field .value {
+            font-size: 0.95rem;
+            color: #333;
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        /* --- Galeria de fotos al detall --- */
+        .detail-photos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .detail-photos img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .detail-photos img:hover {
+            transform: scale(1.05);
+        }
+
+        /* --- Notes al detall --- */
+        .detail-notes {
+            margin-top: 10px;
+        }
+
+        .detail-note {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .detail-note .note-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .detail-note .note-author {
+            font-weight: 600;
+            color: #4361ee;
+        }
+
+        .detail-note .note-text {
+            font-size: 0.85rem;
+            color: #333;
+        }
+
+        /* --- Modal de foto --- */
+        .photo-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .photo-modal.open {
+            display: flex;
+        }
+
+        .photo-modal img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 4px;
+        }
+
+        .photo-modal .close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        /* --- Missatges --- */
+        .message {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            display: block;
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .filters {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .side-panel {
+                width: 100%;
+                right: -100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .filters {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Historial d'Incidències</h1>
+
+        <!-- Missatges -->
+        <div id="message" class="message"></div>
+
+        <!-- Filtres -->
+        <div class="filters">
+            <div class="filter-group">
+                <label for="searchText">Cerca per text</label>
+                <input type="text" id="searchText" placeholder="Títol, descripció o ubicació..." oninput="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterEstat">Estat</label>
+                <select id="filterEstat" onchange="applyFilters()">
+                    <option value="">Tots</option>
+                    <option value="oberta">Oberta</option>
+                    <option value="en curs">En curs</option>
+                    <option value="resolta">Resolta</option>
+                    <option value="tancada">Tancada</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterPrioritat">Prioritat</label>
+                <select id="filterPrioritat" onchange="applyFilters()">
+                    <option value="">Totes</option>
+                    <option value="1">1 (Crític)</option>
+                    <option value="2">2 (Alt)</option>
+                    <option value="3">3 (Mitjà)</option>
+                    <option value="4">4 (Baix)</option>
+                    <option value="5">5 (Trivial)</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterCategoria">Categoria</label>
+                <select id="filterCategoria" onchange="applyFilters()">
+                    <option value="">Totes</option>
+                    <option value="hardware">Hardware</option>
+                    <option value="software">Software</option>
+                    <option value="xarxa">Xarxa</option>
+                    <option value="proveïdor">Proveïdor</option>
+                    <option value="seguretat">Seguretat</option>
+                    <option value="altre">Altre</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterDataInici">Data (des de)</label>
+                <input type="date" id="filterDataInici" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterDataFi">Data (fins a)</label>
+                <input type="date" id="filterDataFi" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterProveidor">Proveïdor</label>
+                <select id="filterProveidor" onchange="applyFilters()">
+                    <option value="">Tots</option>
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button class="btn btn-secondary" onclick="clearFilters()">Neteja filtres</button>
+            </div>
+        </div>
+
+        <!-- Taula d'incidències -->
+        <div class="table-container">
+            <table id="incidentsTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortBy('id')">ID <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('titol')">Títol <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('prioritat')">Prioritat <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('estat')">Estat <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('ubicacio')">Ubicació <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('dataCreacio')">Data de creació <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('proveidor')">Proveïdor <span class="sort-icon">↑↓</span></th>
+                        <th>Accions</th>
+                    </tr>
+                </thead>
+                <tbody id="incidentsBody">
+                    <!-- Es carrega dinàmicament -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Panell lateral de detall -->
+    <div class="side-panel" id="sidePanel">
+        <div class="side-panel-header">
+            <h2 id="detailTitle">Detall de la incidència</h2>
+            <button class="side-panel-close" onclick="closePanel()">&times;</button>
+        </div>
+        <div class="side-panel-body" id="detailBody">
+            <!-- Es carrega dinàmicament -->
+        </div>
+    </div>
+
+    <!-- Modal de foto -->
+    <div class="photo-modal" id="photoModal" onclick="closePhotoModal()">
+        <button class="close" onclick="closePhotoModal()">&times
+
+
 
 ## Resposta de la IA (guardies-ia)
 
@@ -8877,8 +9420,6 @@ A continuació, el codi HTML complet:
     <!-- Modal de foto -->
     <div class="photo-modal" id="photoModal" onclick="closePhotoModal()">
         <button class="close" onclick="closePhotoModal()">&times
-Genera el codi HTML complet per a l'historial d'incidències. No generis text addicional, només el codi dins d'un bloc ```html. El codi ha de ser complet i funcional, amb estils i taula de dades.
-Torna a generar el codi HTML complet per a l'historial d'incidències. Basa't en el codi que has generat anteriorment, però assegura't que sigui complet i funcional. Inclou tot el codi (HTML, CSS i JavaScript) dins d'un únic bloc ```html ... ```. No afegeixis text fora del bloc. El fitxer s'ha de dir historial-incidencies.html.
 
 
 ## Resposta de la IA (guardies-ia)
@@ -8899,8 +9440,8 @@ La cinquena tasca del MVP és la visualització de l'historial d'incidències. S
 
 Seguint el principi de **Modular Design** i **Single Source of Truth**, crearé directament:
 
-1. La interfície HTML completa (`content/html/historial-incidencies.html`) amb CSS i JavaScript inclòs.
-2. L'especificació de la interfície d'historial (`content/templates/incident-history.md`).
+1. L'especificació de la interfície d'historial (`content/templates/incident-history.md`).
+2. La interfície HTML completa (`content/html/historial-incidencies.html`) amb CSS i JavaScript inclòs.
 3. El prompt per generar la interfície (`content/prompts/generate-incident-history.md`).
 
 **Estructura de la interfície:**
@@ -9421,3 +9962,5010 @@ A continuació, el codi HTML complet:
     <!-- Modal de foto -->
     <div class="photo-modal" id="photoModal" onclick="closePhotoModal()">
         <button class="close" onclick="closePhotoModal()">&times
+
+
+## Resposta de la IA (guardies-ia)
+
+D'acord. He carregat el context complet del projecte.
+
+**Anàlisi de la tasca:**
+
+La cinquena tasca del MVP és la visualització de l'historial d'incidències. Seguint les convencions del framework IA-Productiva i la informació de les tasques anteriors:
+
+1. **La plantilla d'incidències** (`content/templates/incident-template.md`) defineix l'estructura de dades de cada incidència.
+2. **L'especificació del formulari** (`content/templates/incident-form.md`) defineix la interfície per crear incidències.
+3. **El sistema d'emmagatzematge de fotos** (`content/templates/photo-storage.md`) gestiona les imatges.
+4. **El sistema de gestió de proveïdors** (`content/templates/provider-management.md`) gestiona els contactes.
+5. **Ara cal crear la interfície** per visualitzar l'historial complet d'incidències, incloent-hi el llistat, el filtratge i la visualització de detalls.
+
+**Decisió de disseny:**
+
+Seguint el principi de **Modular Design** i **Single Source of Truth**, crearé directament:
+
+1. L'especificació de la interfície d'historial (`content/templates/incident-history.md`).
+2. La interfície HTML completa (`content/html/historial-incidencies.html`) amb CSS i JavaScript inclòs.
+3. El prompt per generar la interfície (`content/prompts/generate-incident-history.md`).
+
+**Estructura de la interfície:**
+
+- **Filtres**: Per text, estat, prioritat, categoria, data i proveïdor.
+- **Llista d'incidències**: Taula amb ID, Títol, Prioritat, Estat, Ubicació, Data de creació, Proveïdor assignat i Accions.
+- **Detall d'incidència**: Panell lateral amb informació completa, fotos i notes.
+- **Accions**: Veure, Editar, Eliminar.
+
+A continuació, el codi HTML complet:
+
+```html
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial d'Incidències - IA-Productiva</title>
+    <style>
+        /* --- Estils generals --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #1a1a2e;
+        }
+
+        /* --- Filtres --- */
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: #4361ee;
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+
+        .filter-actions {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #4361ee;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3a56d4;
+        }
+
+        .btn-secondary {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background-color: #d0d0d0;
+        }
+
+        .btn-danger {
+            background-color: #e63946;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c1121f;
+        }
+
+        .btn-info {
+            background-color: #457b9d;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background-color: #3a6b8a;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+        }
+
+        /* --- Taula --- */
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            background-color: #e9ecef;
+        }
+
+        th .sort-icon {
+            margin-left: 5px;
+            font-size: 0.7rem;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9rem;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        tr.selected {
+            background-color: #e8f0fe;
+        }
+
+        /* --- Badges --- */
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-priority-1 { background-color: #e63946; color: white; }
+        .badge-priority-2 { background-color: #f4a261; color: white; }
+        .badge-priority-3 { background-color: #e9c46a; color: #333; }
+        .badge-priority-4 { background-color: #457b9d; color: white; }
+        .badge-priority-5 { background-color: #2a9d8f; color: white; }
+
+        .badge-estat-oberta { background-color: #e63946; color: white; }
+        .badge-estat-en-curs { background-color: #f4a261; color: white; }
+        .badge-estat-resolta { background-color: #2a9d8f; color: white; }
+        .badge-estat-tancada { background-color: #6c757d; color: white; }
+
+        /* --- Panell lateral --- */
+        .side-panel {
+            position: fixed;
+            top: 0;
+            right: -600px;
+            width: 600px;
+            max-width: 100%;
+            height: 100%;
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .side-panel.open {
+            right: 0;
+        }
+
+        .side-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+        }
+
+        .side-panel-header h2 {
+            font-size: 1.3rem;
+            color: #1a1a2e;
+        }
+
+        .side-panel-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #888;
+            padding: 5px;
+        }
+
+        .side-panel-close:hover {
+            color: #333;
+        }
+
+        .side-panel-body {
+            padding: 20px;
+        }
+
+        .detail-field {
+            margin-bottom: 15px;
+        }
+
+        .detail-field label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+
+        .detail-field .value {
+            font-size: 0.95rem;
+            color: #333;
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        /* --- Galeria de fotos al detall --- */
+        .detail-photos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .detail-photos img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .detail-photos img:hover {
+            transform: scale(1.05);
+        }
+
+        /* --- Notes al detall --- */
+        .detail-notes {
+            margin-top: 10px;
+        }
+
+        .detail-note {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .detail-note .note-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .detail-note .note-author {
+            font-weight: 600;
+            color: #4361ee;
+        }
+
+        .detail-note .note-text {
+            font-size: 0.85rem;
+            color: #333;
+        }
+
+        /* --- Modal de foto --- */
+        .photo-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .photo-modal.open {
+            display: flex;
+        }
+
+        .photo-modal img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 4px;
+        }
+
+        .photo-modal .close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        /* --- Missatges --- */
+        .message {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            display: block;
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .filters {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .side-panel {
+                width: 100%;
+                right: -100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .filters {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Historial d'Incidències</h1>
+
+        <!-- Missatges -->
+        <div id="message" class="message"></div>
+
+        <!-- Filtres -->
+        <div class="filters">
+            <div class="filter-group">
+                <label for="searchText">Cerca per text</label>
+                <input type="text" id="searchText" placeholder="Títol, descripció o ubicació..." oninput="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterEstat">Estat</label>
+                <select id="filterEstat" onchange="applyFilters()">
+                    <option value="">Tots</option>
+                    <option value="oberta">Oberta</option>
+                    <option value="en curs">En curs</option>
+                    <option value="resolta">Resolta</option>
+                    <option value="tancada">Tancada</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterPrioritat">Prioritat</label>
+                <select id="filterPrioritat" onchange="applyFilters()">
+                    <option value="">Totes</option>
+                    <option value="1">1 (Crític)</option>
+                    <option value="2">2 (Alt)</option>
+                    <option value="3">3 (Mitjà)</option>
+                    <option value="4">4 (Baix)</option>
+                    <option value="5">5 (Trivial)</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterCategoria">Categoria</label>
+                <select id="filterCategoria" onchange="applyFilters()">
+                    <option value="">Totes</option>
+                    <option value="hardware">Hardware</option>
+                    <option value="software">Software</option>
+                    <option value="xarxa">Xarxa</option>
+                    <option value="proveïdor">Proveïdor</option>
+                    <option value="seguretat">Seguretat</option>
+                    <option value="altre">Altre</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterDataInici">Data (des de)</label>
+                <input type="date" id="filterDataInici" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterDataFi">Data (fins a)</label>
+                <input type="date" id="filterDataFi" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterProveidor">Proveïdor</label>
+                <select id="filterProveidor" onchange="applyFilters()">
+                    <option value="">Tots</option>
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button class="btn btn-secondary" onclick="clearFilters()">Neteja filtres</button>
+            </div>
+        </div>
+
+        <!-- Taula d'incidències -->
+        <div class="table-container">
+            <table id="incidentsTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortBy('id')">ID <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('titol')">Títol <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('prioritat')">Prioritat <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('estat')">Estat <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('ubicacio')">Ubicació <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('dataCreacio')">Data de creació <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('proveidor')">Proveïdor <span class="sort-icon">↑↓</span></th>
+                        <th>Accions</th>
+                    </tr>
+                </thead>
+                <tbody id="incidentsBody">
+                    <!-- Es carrega dinàmicament -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Panell lateral de detall -->
+    <div class="side-panel" id="sidePanel">
+        <div class="side-panel-header">
+            <h2 id="detailTitle">Detall de la incidència</h2>
+            <button class="side-panel-close" onclick="closePanel()">&times;</button>
+        </div>
+        <div class="side-panel-body" id="detailBody">
+            <!-- Es carrega dinàmicament -->
+        </div>
+    </div>
+
+    <!-- Modal de foto -->
+    <div class="photo-modal" id="photoModal" onclick="closePhotoModal()">
+        <button class="close" onclick="closePhotoModal()">&times
+
+        Genera el codi HTML complet per a l'historial d'incidències. El codi ha de començar per <!DOCTYPE html> i acabar amb </html>. Inclou el codi EXCLUSIVAMENT dins d'un bloc ```html ... ```. NO afegeixis cap text fora del bloc. Si no ho fas així, la tasca fallarà.
+
+
+## Resposta de la IA (guardies-ia)
+
+D'acord. He carregat el context complet del projecte.
+
+**Anàlisi de la tasca:**
+
+La cinquena tasca del MVP és la visualització de l'historial d'incidències. Seguint les convencions del framework IA-Productiva i la informació de les tasques anteriors:
+
+1. **La plantilla d'incidències** (`content/templates/incident-template.md`) defineix l'estructura de dades de cada incidència.
+2. **L'especificació del formulari** (`content/templates/incident-form.md`) defineix la interfície per crear incidències.
+3. **El sistema d'emmagatzematge de fotos** (`content/templates/photo-storage.md`) gestiona les imatges.
+4. **El sistema de gestió de proveïdors** (`content/templates/provider-management.md`) gestiona els contactes.
+5. **Ara cal crear la interfície** per visualitzar l'historial complet d'incidències, incloent-hi el llistat, el filtratge i la visualització de detalls.
+
+**Estructura de la interfície:**
+
+- **Filtres**: Per text, estat, prioritat, categoria, data i proveïdor.
+- **Llista d'incidències**: Taula amb ID, Títol, Prioritat, Estat, Ubicació, Data de creació, Proveïdor assignat i Accions.
+- **Detall d'incidència**: Panell lateral amb informació completa, fotos i notes.
+- **Accions**: Veure, Editar, Eliminar.
+
+A continuació, el codi HTML complet:
+
+```html
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial d'Incidències - IA-Productiva</title>
+    <style>
+        /* --- Estils generals --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #1a1a2e;
+        }
+
+        /* --- Filtres --- */
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: #4361ee;
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+
+        .filter-actions {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #4361ee;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3a56d4;
+        }
+
+        .btn-secondary {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background-color: #d0d0d0;
+        }
+
+        .btn-danger {
+            background-color: #e63946;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c1121f;
+        }
+
+        .btn-info {
+            background-color: #457b9d;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background-color: #3a6b8a;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+        }
+
+        /* --- Taula --- */
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            background-color: #e9ecef;
+        }
+
+        th .sort-icon {
+            margin-left: 5px;
+            font-size: 0.7rem;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9rem;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        tr.selected {
+            background-color: #e8f0fe;
+        }
+
+        /* --- Badges --- */
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-priority-1 { background-color: #e63946; color: white; }
+        .badge-priority-2 { background-color: #f4a261; color: white; }
+        .badge-priority-3 { background-color: #e9c46a; color: #333; }
+        .badge-priority-4 { background-color: #457b9d; color: white; }
+        .badge-priority-5 { background-color: #2a9d8f; color: white; }
+
+        .badge-estat-oberta { background-color: #e63946; color: white; }
+        .badge-estat-en-curs { background-color: #f4a261; color: white; }
+        .badge-estat-resolta { background-color: #2a9d8f; color: white; }
+        .badge-estat-tancada { background-color: #6c757d; color: white; }
+
+        /* --- Panell lateral --- */
+        .side-panel {
+            position: fixed;
+            top: 0;
+            right: -600px;
+            width: 600px;
+            max-width: 100%;
+            height: 100%;
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .side-panel.open {
+            right: 0;
+        }
+
+        .side-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+        }
+
+        .side-panel-header h2 {
+            font-size: 1.3rem;
+            color: #1a1a2e;
+        }
+
+        .side-panel-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #888;
+            padding: 5px;
+        }
+
+        .side-panel-close:hover {
+            color: #333;
+        }
+
+        .side-panel-body {
+            padding: 20px;
+        }
+
+        .detail-field {
+            margin-bottom: 15px;
+        }
+
+        .detail-field label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+
+        .detail-field .value {
+            font-size: 0.95rem;
+            color: #333;
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        /* --- Galeria de fotos al detall --- */
+        .detail-photos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .detail-photos img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .detail-photos img:hover {
+            transform: scale(1.05);
+        }
+
+        /* --- Notes al detall --- */
+        .detail-notes {
+            margin-top: 10px;
+        }
+
+        .detail-note {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .detail-note .note-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .detail-note .note-author {
+            font-weight: 600;
+            color: #4361ee;
+        }
+
+        .detail-note .note-text {
+            font-size: 0.85rem;
+            color: #333;
+        }
+
+        /* --- Modal de foto --- */
+        .photo-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .photo-modal.open {
+            display: flex;
+        }
+
+        .photo-modal img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 4px;
+        }
+
+        .photo-modal .close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        /* --- Missatges --- */
+        .message {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            display: block;
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .filters {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .side-panel {
+                width: 100%;
+                right: -100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .filters {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Historial d'Incidències</h1>
+
+        <!-- Missatges -->
+        <div id="message" class="message"></div>
+
+        <!-- Filtres -->
+        <div class="filters">
+            <div class="filter-group">
+                <label for="searchText">Cerca per text</label>
+                <input type="text" id="searchText" placeholder="Títol, descripció o ubicació..." oninput="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterEstat">Estat</label>
+                <select id="filterEstat" onchange="applyFilters()">
+                    <option value="">Tots</option>
+                    <option value="oberta">Oberta</option>
+                    <option value="en curs">En curs</option>
+                    <option value="resolta">Resolta</option>
+                    <option value="tancada">Tancada</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterPrioritat">Prioritat</label>
+                <select id="filterPrioritat" onchange="applyFilters()">
+                    <option value="">Totes</option>
+                    <option value="1">1 (Crític)</option>
+                    <option value="2">2 (Alt)</option>
+                    <option value="3">3 (Mitjà)</option>
+                    <option value="4">4 (Baix)</option>
+                    <option value="5">5 (Trivial)</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterCategoria">Categoria</label>
+                <select id="filterCategoria" onchange="applyFilters()">
+                    <option value="">Totes</option>
+                    <option value="hardware">Hardware</option>
+                    <option value="software">Software</option>
+                    <option value="xarxa">Xarxa</option>
+                    <option value="proveïdor">Proveïdor</option>
+                    <option value="seguretat">Seguretat</option>
+                    <option value="altre">Altre</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterDataInici">Data (des de)</label>
+                <input type="date" id="filterDataInici" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterDataFi">Data (fins a)</label>
+                <input type="date" id="filterDataFi" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterProveidor">Proveïdor</label>
+                <select id="filterProveidor" onchange="applyFilters()">
+                    <option value="">Tots</option>
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button class="btn btn-secondary" onclick="clearFilters()">Neteja filtres</button>
+            </div>
+        </div>
+
+        <!-- Taula d'incidències -->
+        <div class="table-container">
+            <table id="incidentsTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortBy('id')">ID <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('titol')">Títol <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('prioritat')">Prioritat <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('estat')">Estat <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('ubicacio')">Ubicació <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('dataCreacio')">Data de creació <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('proveidor')">Proveïdor <span class="sort-icon">↑↓</span></th>
+                        <th>Accions</th>
+                    </tr>
+                </thead>
+                <tbody id="incidentsBody">
+                    <!-- Es carrega dinàmicament -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Panell lateral de detall -->
+    <div class="side-panel" id="sidePanel">
+        <div class="side-panel-header">
+            <h2 id="detailTitle">Detall de la incidència</h2>
+            <button class="side-panel-close" onclick="closePanel()">&times;</button>
+        </div>
+        <div class="side-panel-body" id="detailBody">
+            <!-- Es carrega dinàmicament -->
+        </div>
+    </div>
+
+    <!-- Modal de foto -->
+    <div class="photo-modal" id="photoModal" onclick="closePhotoModal()">
+        <button class="close" onclick="closePhotoModal()">&times;</button>
+        <img id="photoModalImage" src="" alt="Foto ampliada">
+    </div>
+
+    <script>
+        // --- Dades simulades ---
+        // En un entorn real, això es carregaria des de fitxers YAML individuals
+        let incidents = [
+            {
+                id: "INC-20260716-0001",
+                titol: "El servidor web no respon",
+                descripcio: "El servei HTTP al servidor 192.
+
+
+## Resposta de la IA (guardies-ia)
+
+```html
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial d'Incidències - IA-Productiva</title>
+    <style>
+        /* --- Estils generals --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #1a1a2e;
+        }
+
+        /* --- Filtres --- */
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: #4361ee;
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+
+        .filter-actions {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #4361ee;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3a56d4;
+        }
+
+        .btn-secondary {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background-color: #d0d0d0;
+        }
+
+        .btn-danger {
+            background-color: #e63946;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c1121f;
+        }
+
+        .btn-info {
+            background-color: #457b9d;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background-color: #3a6b8a;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+        }
+
+        /* --- Taula --- */
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            background-color: #e9ecef;
+        }
+
+        th .sort-icon {
+            margin-left: 5px;
+            font-size: 0.7rem;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9rem;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        tr.selected {
+            background-color: #e8f0fe;
+        }
+
+        /* --- Badges --- */
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-priority-1 { background-color: #e63946; color: white; }
+        .badge-priority-2 { background-color: #f4a261; color: white; }
+        .badge-priority-3 { background-color: #e9c46a; color: #333; }
+        .badge-priority-4 { background-color: #457b9d; color: white; }
+        .badge-priority-5 { background-color: #2a9d8f; color: white; }
+
+        .badge-estat-oberta { background-color: #e63946; color: white; }
+        .badge-estat-en-curs { background-color: #f4a261; color: white; }
+        .badge-estat-resolta { background-color: #2a9d8f; color: white; }
+        .badge-estat-tancada { background-color: #6c757d; color: white; }
+
+        /* --- Panell lateral --- */
+        .side-panel {
+            position: fixed;
+            top: 0;
+            right: -600px;
+            width: 600px;
+            max-width: 100%;
+            height: 100%;
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .side-panel.open {
+            right: 0;
+        }
+
+        .side-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+        }
+
+        .side-panel-header h2 {
+            font-size: 1.3rem;
+            color: #1a1a2e;
+        }
+
+        .side-panel-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #888;
+            padding: 5px;
+        }
+
+        .side-panel-close:hover {
+            color: #333;
+        }
+
+        .side-panel-body {
+            padding: 20px;
+        }
+
+        .detail-field {
+            margin-bottom: 15px;
+        }
+
+        .detail-field label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+
+        .detail-field .value {
+            font-size: 0.95rem;
+            color: #333;
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        /* --- Galeria de fotos al detall --- */
+        .detail-photos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .detail-photos img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .detail-photos img:hover {
+            transform: scale(1.05);
+        }
+
+        /* --- Notes al detall --- */
+        .detail-notes {
+            margin-top: 10px;
+        }
+
+        .detail-note {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .detail-note .note-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .detail-note .note-author {
+            font-weight: 600;
+            color: #4361ee;
+        }
+
+        .detail-note .note-text {
+            font-size: 0.85rem;
+            color: #333;
+        }
+
+        /* --- Modal de foto --- */
+        .photo-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .photo-modal.open {
+            display: flex;
+        }
+
+        .photo-modal img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 4px;
+        }
+
+        .photo-modal .close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        /* --- Missatges --- */
+        .message {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            display: block;
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .filters {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .side-panel {
+                width: 100%;
+                right: -100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .filters {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Historial d'Incidències</h1>
+
+        <!-- Missatges -->
+        <div id="message" class="message"></div>
+
+        <!-- Filtres -->
+        <div class="filters">
+            <div class="filter-group">
+                <label for="searchText">Cerca per text</label>
+                <input type="text" id="searchText" placeholder="Títol, descripció o ubicació..." oninput="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterEstat">Estat</label>
+                <select id="filterEstat" onchange="applyFilters()">
+                    <option value="">Tots</option>
+                    <option value="oberta">Oberta</option>
+                    <option value="en curs">En curs</option>
+                    <option value="resolta">Resolta</option>
+                    <option value="tancada">Tancada</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterPrioritat">Prioritat</label>
+                <select id="filterPrioritat" onchange="applyFilters()">
+                    <option value="">Totes</option>
+                    <option value="1">1 (Crític)</option>
+                    <option value="2">2 (Alt)</option>
+                    <option value="3">3 (Mitjà)</option>
+                    <option value="4">4 (Baix)</option>
+                    <option value="5">5 (Trivial)</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterCategoria">Categoria</label>
+                <select id="filterCategoria" onchange="applyFilters()">
+                    <option value="">Totes</option>
+                    <option value="hardware">Hardware</option>
+                    <option value="software">Software</option>
+                    <option value="xarxa">Xarxa</option>
+                    <option value="proveïdor">Proveïdor</option>
+                    <option value="seguretat">Seguretat</option>
+                    <option value="altre">Altre</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterDataInici">Data (des de)</label>
+                <input type="date" id="filterDataInici" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterDataFi">Data (fins a)</label>
+                <input type="date" id="filterDataFi" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterProveidor">Proveïdor</label>
+                <select id="filterProveidor" onchange="applyFilters()">
+                    <option value="">Tots</option>
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button class="btn btn-secondary" onclick="clearFilters()">Neteja filtres</button>
+            </div>
+        </div>
+
+        <!-- Taula d'incidències -->
+        <div class="table-container">
+            <table id="incidentsTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortBy('id')">ID <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('titol')">Títol <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('prioritat')">Prioritat <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('estat')">Estat <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('ubicacio')">Ubicació <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('dataCreacio')">Data de creació <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('proveidor')">Proveïdor <span class="sort-icon">↑↓</span></th>
+                        <th>Accions</th>
+                    </tr>
+                </thead>
+                <tbody id="incidentsBody">
+                    <!-- Es carrega dinàmicament -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Panell lateral de detall -->
+    <div class="side-panel" id="sidePanel">
+        <div class="side-panel-header">
+            <h2 id="detailTitle">Detall de la incidència</h2>
+            <button class="side-panel-close" onclick="closePanel()">&times;</button>
+        </div>
+        <div class="side-panel-body" id="detailBody">
+            <!-- Es carrega dinàmicament -->
+        </div>
+    </div>
+
+    <!-- Modal de foto -->
+    <div class="photo-modal" id="photoModal" onclick="closePhotoModal()">
+        <button class="close" onclick="closePhotoModal()">&times;</button>
+        <img id="photoModalImage" src="" alt="Foto ampliada">
+    </div>
+
+    <script>
+        // --- Dades simulades ---
+        // En un entorn real, això es carregaria des de fitxers YAML individuals
+        let incidents = [
+            {
+                id: "INC-20260716-0001",
+                titol: "El servidor web no respon",
+                descripcio: "El servei HTTP al servidor 192.168.1.10 no respon. Comportament esperat: retornar codi 200. Comportament observat: timeout.",
+                dataCreacio: "2026-07-16T10:30:00Z",
+                dataResolucio: null,
+                prioritat: 1,
+                estat: "oberta",
+                ubicacio: "Servidor Producció",
+                categoria: "xarxa",
+                proveidor: "(pendent)",
+                fotos: [],
+                notes: [
+                    { data: "2026-07-16T10:35:00Z", autor: "Maria Garcia", text: "He revisat el servidor. Sembla un error de configuració." }
+                ]
+            },
+            {
+                id: "INC-20260716-0002",
+                titol: "Pantalla blava a l'oficina 3B",
+                descripcio: "L'ordinador de l'oficina 3B mostra pantalla blava en iniciar sessió.",
+                dataCreacio: "2026-07-16T11:00:00Z",
+                dataResolucio: "2026-07-16T14:30:00Z",
+                prioritat: 2,
+                estat: "resolta",
+                ubicacio: "Oficina 3B",
+                categoria: "hardware",
+                proveidor: "Tècnics Informàtics SL",
+                fotos: ["data/photos/20260716/INC-20260716-0002/photo-001.jpg"],
+                notes: [
+                    { data: "2026-07-16T12:00:00Z", autor: "Joan Martínez", text: "
+
+
+## Resposta de la IA (guardies-ia)
+
+```html
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial d'Incidències - IA-Productiva</title>
+    <style>
+        /* --- Estils generals --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #1a1a2e;
+        }
+
+        /* --- Filtres --- */
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: #4361ee;
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+
+        .filter-actions {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #4361ee;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3a56d4;
+        }
+
+        .btn-secondary {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background-color: #d0d0d0;
+        }
+
+        .btn-danger {
+            background-color: #e63946;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c1121f;
+        }
+
+        .btn-info {
+            background-color: #457b9d;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background-color: #3a6b8a;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+        }
+
+        /* --- Taula --- */
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            background-color: #e9ecef;
+        }
+
+        th .sort-icon {
+            margin-left: 5px;
+            font-size: 0.7rem;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9rem;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        tr.selected {
+            background-color: #e8f0fe;
+        }
+
+        /* --- Badges --- */
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-priority-1 { background-color: #e63946; color: white; }
+        .badge-priority-2 { background-color: #f4a261; color: white; }
+        .badge-priority-3 { background-color: #e9c46a; color: #333; }
+        .badge-priority-4 { background-color: #457b9d; color: white; }
+        .badge-priority-5 { background-color: #2a9d8f; color: white; }
+
+        .badge-estat-oberta { background-color: #e63946; color: white; }
+        .badge-estat-en-curs { background-color: #f4a261; color: white; }
+        .badge-estat-resolta { background-color: #2a9d8f; color: white; }
+        .badge-estat-tancada { background-color: #6c757d; color: white; }
+
+        /* --- Panell lateral --- */
+        .side-panel {
+            position: fixed;
+            top: 0;
+            right: -600px;
+            width: 600px;
+            max-width: 100%;
+            height: 100%;
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .side-panel.open {
+            right: 0;
+        }
+
+        .side-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+        }
+
+        .side-panel-header h2 {
+            font-size: 1.3rem;
+            color: #1a1a2e;
+        }
+
+        .side-panel-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #888;
+            padding: 5px;
+        }
+
+        .side-panel-close:hover {
+            color: #333;
+        }
+
+        .side-panel-body {
+            padding: 20px;
+        }
+
+        .detail-field {
+            margin-bottom: 15px;
+        }
+
+        .detail-field label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+
+        .detail-field .value {
+            font-size: 0.95rem;
+            color: #333;
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        /* --- Galeria de fotos al detall --- */
+        .detail-photos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .detail-photos img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .detail-photos img:hover {
+            transform: scale(1.05);
+        }
+
+        /* --- Notes al detall --- */
+        .detail-notes {
+            margin-top: 10px;
+        }
+
+        .detail-note {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .detail-note .note-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .detail-note .note-author {
+            font-weight: 600;
+            color: #4361ee;
+        }
+
+        .detail-note .note-text {
+            font-size: 0.85rem;
+            color: #333;
+        }
+
+        /* --- Modal de foto --- */
+        .photo-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .photo-modal.open {
+            display: flex;
+        }
+
+        .photo-modal img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 4px;
+        }
+
+        .photo-modal .close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        /* --- Missatges --- */
+        .message {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            display: block;
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .filters {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .side-panel {
+                width: 100%;
+                right: -100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .filters {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Historial d'Incidències</h1>
+
+        <!-- Missatges -->
+        <div id="message" class="message"></div>
+
+        <!-- Filtres -->
+        <div class="filters">
+            <div class="filter-group">
+                <label for="searchText">Cerca per text</label>
+                <input type="text" id="searchText" placeholder="Títol, descripció o ubicació..." oninput="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterEstat">Estat</label>
+                <select id="filterEstat" onchange="applyFilters()">
+                    <option value="">Tots</option>
+                    <option value="oberta">Oberta</option>
+                    <option value="en curs">En curs</option>
+                    <option value="resolta">Resolta</option>
+                    <option value="tancada">Tancada</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterPrioritat">Prioritat</label>
+                <select id="filterPrioritat" onchange="applyFilters()">
+                    <option value="">Totes</option>
+                    <option value="1">1 (Crític)</option>
+                    <option value="2">2 (Alt)</option>
+                    <option value="3">3 (Mitjà)</option>
+                    <option value="4">4 (Baix)</option>
+                    <option value="5">5 (Trivial)</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterCategoria">Categoria</label>
+                <select id="filterCategoria" onchange="applyFilters()">
+                    <option value="">Totes</option>
+                    <option value="hardware">Hardware</option>
+                    <option value="software">Software</option>
+                    <option value="xarxa">Xarxa</option>
+                    <option value="proveïdor">Proveïdor</option>
+                    <option value="seguretat">Seguretat</option>
+                    <option value="altre">Altre</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterDataInici">Data (des de)</label>
+                <input type="date" id="filterDataInici" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterDataFi">Data (fins a)</label>
+                <input type="date" id="filterDataFi" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label for="filterProveidor">Proveïdor</label>
+                <select id="filterProveidor" onchange="applyFilters()">
+                    <option value="">Tots</option>
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button class="btn btn-secondary" onclick="clearFilters()">Neteja filtres</button>
+            </div>
+        </div>
+
+        <!-- Taula d'incidències -->
+        <div class="table-container">
+            <table id="incidentsTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortBy('id')">ID <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('titol')">Títol <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('prioritat')">Prioritat <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('estat')">Estat <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('ubicacio')">Ubicació <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('dataCreacio')">Data de creació <span class="sort-icon">↑↓</span></th>
+                        <th onclick="sortBy('proveidor')">Proveïdor <span class="sort-icon">↑↓</span></th>
+                        <th>Accions</th>
+                    </tr>
+                </thead>
+                <tbody id="incidentsBody">
+                    <!-- Es carrega dinàmicament -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Panell lateral de detall -->
+    <div class="side-panel" id="sidePanel">
+        <div class="side-panel-header">
+            <h2 id="detailTitle">Detall de la incidència</h2>
+            <button class="side-panel-close" onclick="closePanel()">&times;</button>
+        </div>
+        <div class="side-panel-body" id="detailBody">
+            <!-- Es carrega dinàmicament -->
+        </div>
+    </div>
+
+    <!-- Modal de foto -->
+    <div class="photo-modal" id="photoModal" onclick="closePhotoModal()">
+        <button class="close" onclick="closePhotoModal()">&times;</button>
+        <img id="photoModalImage" src="" alt="Foto ampliada">
+    </div>
+
+    <script>
+        // --- Dades simulades ---
+        // En un entorn real, això es carregaria des de fitxers YAML individuals
+        let incidents = [
+            {
+                id: "INC-20260716-0001",
+                titol: "El servidor web no respon",
+                descripcio: "El servei HTTP al servidor 192.168.1.10 no respon. Comportament esperat: retornar codi 200. Comportament observat: timeout.",
+                dataCreacio: "2026-07-16T10:30:00Z",
+                dataResolucio: null,
+                prioritat: 1,
+                estat: "oberta",
+                ubicacio: "Servidor Producció",
+                categoria: "xarxa",
+                proveidor: "(pendent)",
+                fotos: [],
+                notes: [
+                    { data: "2026-07-16T10:35:00Z", autor: "Maria Garcia", text: "He revisat el servidor. Sembla un error de configuració." }
+                ]
+            },
+            {
+                id: "INC-20260716-0002",
+                titol: "Pantalla blava a l'oficina 3B",
+                descripcio: "L'ordinador de l'oficina 3B mostra pantalla blava en iniciar sessió.",
+                dataCreacio: "2026-07-16T11:00:00Z",
+                dataResolucio: "2026-07-16T14:30:00Z",
+                prioritat: 2,
+                estat: "resolta",
+                ubicacio: "Oficina 3B",
+                categoria: "hardware",
+                proveidor: "Tècnics Informàtics SL",
+                fotos: ["data/photos/20260716/INC-20260716-0002/photo-001.jpg"],
+                notes: [
+                    { data: "2026-07-16T12:00:00Z", autor: "Joan Martínez", text: "
+
+
+## Resposta de la IA (guardies-ia)
+
+```python
+import os
+import json
+from datetime import datetime, timedelta
+from pathlib import Path
+
+class ReportGenerator:
+    """Genera informes d'incidències per dia, setmana o mes."""
+    
+    def __init__(self, incidents_dir: str = "data/incidents"):
+        self.incidents_dir = Path(incidents_dir)
+        
+    def load_incidents(self) -> list:
+        """Carrega totes les incidències dels fitxers YAML."""
+        incidents = []
+        if not self.incidents_dir.exists():
+            return incidents
+            
+        for filepath in self.incidents_dir.glob("*.yaml"):
+            try:
+                with open(filepath, "r", encoding="utf-8") as f:
+                    import yaml
+                    incident = yaml.safe_load(f)
+                    if incident:
+                        incidents.append(incident)
+            except Exception:
+                continue
+        return incidents
+    
+    def generate_daily_report(self, date: str) -> dict:
+        """Genera informe diari per una data concreta (format YYYY-MM-DD)."""
+        incidents = self.load_incidents()
+        filtered = [i for i in incidents if i.get("data_creacio", "").startswith(date)]
+        
+        total = len(filtered)
+        resoltes = len([i for i in filtered if i.get("estat") == "resolta"])
+        tancades = len([i for i in filtered if i.get("estat") == "tancada"])
+        actives = len([i for i in filtered if i.get("estat") in ("oberta", "en curs")])
+        
+        per_prioritat = {}
+        per_categoria = {}
+        per_estat = {}
+        
+        for inc in filtered:
+            p = inc.get("prioritat", "desconeguda")
+            per_prioritat[p] = per_prioritat.get(p, 0) + 1
+            
+            c = inc.get("categoria", "sense")
+            per_categoria[c] = per_categoria.get(c, 0) + 1
+            
+            e = inc.get("estat", "desconegut")
+            per_estat[e] = per_estat.get(e, 0) + 1
+        
+        temps_resolucio = []
+        for inc in filtered:
+            if inc.get("data_resolucio") and inc.get("data_creacio"):
+                try:
+                    t1 = datetime.fromisoformat(inc["data_creacio"].replace("Z", "+00:00"))
+                    t2 = datetime.fromisoformat(inc["data_resolucio"].replace("Z", "+00:00"))
+                    diff = (t2 - t1).total_seconds() / 3600
+                    temps_resolucio.append(diff)
+                except:
+                    pass
+        
+        temps_mig = sum(temps_resolucio) / len(temps_resolucio) if temps_resolucio else 0
+        
+        return {
+            "tipus": "diari",
+            "data": date,
+            "metriques": {
+                "total_creades": total,
+                "total_resoltes": resoltes,
+                "total_tancades": tancades,
+                "actives": actives,
+                "per_prioritat": per_prioritat,
+                "per_categoria": per_categoria,
+                "per_estat": per_estat,
+                "temps_mig_resolucio_hores": round(temps_mig, 2)
+            },
+            "incidencies": [i.get("id") for i in filtered]
+        }
+    
+    def generate_weekly_report(self, year: int, week: int) -> dict:
+        """Genera informe setmanal."""
+        incidents = self.load_incidents()
+        start = datetime.strptime(f"{year}-W{week:02d}-1", "%Y-W%W-%w")
+        end = start + timedelta(days=7)
+        
+        filtered = []
+        for inc in incidents:
+            try:
+                d = datetime.fromisoformat(inc.get("data_creacio", "").replace("Z", "+00:00"))
+                if start <= d < end:
+                    filtered.append(inc)
+            except:
+                continue
+        
+        total = len(filtered)
+        resoltes = len([i for i in filtered if i.get("estat") == "resolta"])
+        tancades = len([i for i in filtered if i.get("estat") == "tancada"])
+        actives = len([i for i in filtered if i.get("estat") in ("oberta", "en curs")])
+        
+        per_prioritat = {}
+        per_estat = {}
+        per_categoria = {}
+        per_proveidor = {}
+        
+        for inc in filtered:
+            p = inc.get("prioritat", "desconeguda")
+            per_prioritat[p] = per_prioritat.get(p, 0) + 1
+            e = inc.get("estat", "desconegut")
+            per_estat[e] = per_estat.get(e, 0) + 1
+            c = inc.get("categoria", "sense")
+            per_categoria[c] = per_categoria.get(c, 0) + 1
+            prov = inc.get("proveidor_assignat", "sense")
+            per_proveidor[prov] = per_proveidor.get(prov, 0) + 1
+        
+        temps_resolucio = []
+        for inc in filtered:
+            if inc.get("data_resolucio") and inc.get("data_creacio"):
+                try:
+                    t1 = datetime.fromisoformat(inc["data_creacio"].replace("Z", "+00:00"))
+                    t2 = datetime.fromisoformat(inc["data_resolucio"].replace("Z", "+00:00"))
+                    diff = (t2 - t1).total_seconds() / 3600
+                    temps_resolucio.append(diff)
+                except:
+                    pass
+        
+        temps_mig = sum(temps_resolucio) / len(temps_resolucio) if temps_resolucio else 0
+        mitjana_creades = round(total / 7, 2) if total > 0 else 0
+        mitjana_resoltes = round(resoltes / 7, 2) if resoltes > 0 else 0
+        
+        # Tendència
+        meitat = len(filtered) // 2
+        primera_meitat = len([i for i in filtered[:meitat]])
+        segona_meitat = len([i for i in filtered[meitat:]])
+        if segona_meitat > primera_meitat * 1.1:
+            tendencia = "creixent"
+        elif segona_meitat < primera_meitat * 0.9:
+            tendencia = "decreixent"
+        else:
+            tendencia = "estable"
+        
+        top_categories = sorted(per_categoria.items(), key=lambda x: x[1], reverse=True)[:3]
+        top_proveidors = sorted(per_proveidor.items(), key=lambda x: x[1], reverse=True)[:3]
+        
+        return {
+            "tipus": "setmanal",
+            "setmana": week,
+            "any": year,
+            "data_inici": start.strftime("%Y-%m-%d"),
+            "data_fi": (end - timedelta(days=1)).strftime("%Y-%m-%d"),
+            "metriques": {
+                "total_creades": total,
+                "total_resoltes": resoltes,
+                "total_tancades": tancades,
+                "actives": actives,
+                "mitjana_creades_per_dia": mitjana_creades,
+                "mitjana_resoltes_per_dia": mitjana_resoltes,
+                "tendencia": tendencia,
+                "critiques_no_resoltes": len([i for i in filtered if i.get("prioritat") == 1 and i.get("estat") in ("oberta", "en curs")]),
+                "top_categories": [{"categoria": k, "total": v} for k, v in top_categories],
+                "top_proveidors": [{"proveidor": k, "total": v} for k, v in top_proveidors],
+                "per_prioritat": per_prioritat,
+                "per_estat": per_estat,
+                "temps_mig_resolucio_hores": round(temps_mig, 2)
+            },
+            "incidencies": [i.get("id") for i in filtered]
+        }
+    
+    def generate_monthly_report(self, year: int, month: int) -> dict:
+        """Genera informe mensual."""
+        incidents = self.load_incidents()
+        filtered = []
+        for inc in incidents:
+            try:
+                d = datetime.fromisoformat(inc.get("data_creacio", "").replace("Z", "+00:00"))
+                if d.year == year and d.month == month:
+                    filtered.append(inc)
+            except:
+                continue
+        
+        total = len(filtered)
+        resoltes = len([i for i in filtered if i.get("estat") == "resolta"])
+        tancades = len([i for i in filtered if i.get("estat") == "tancada"])
+        actives = len([i for i in filtered if i.get("estat") in ("oberta", "en curs")])
+        
+        per_prioritat = {}
+        per_estat = {}
+        per_categoria = {}
+        per_proveidor = {}
+        evolucio_diaria = {}
+        
+        for inc in filtered:
+            p = inc.get("prioritat", "desconeguda")
+            per_prioritat[p] = per_prioritat.get(p, 0) + 1
+            e = inc.get("estat", "desconegut")
+            per_estat[e] = per_estat.get(e, 0) + 1
+            c = inc.get("categoria", "sense")
+            per_categoria[c] = per_categoria.get(c, 0) + 1
+            prov = inc.get("proveidor_assignat", "sense")
+            per_proveidor[prov] = per_proveidor.get(prov, 0) + 1
+            
+            dia = inc.get("data_creacio", "")[:10]
+            evolucio_diaria[dia] = evolucio_diaria.get(dia, 0) + 1
+        
+        temps_resolucio = []
+        temps_per_categoria = {}
+        for inc in filtered:
+            if inc.get("data_resolucio") and inc.get("data_creacio"):
+                try:
+                    t1 = datetime.fromisoformat(inc["data_creacio"].replace("Z", "+00:00"))
+                    t2 = datetime.fromisoformat(inc["data_resolucio"].replace("Z", "+00:00"))
+                    diff = (t2 - t1).total_seconds() / 3600
+                    temps_resolucio.append(diff)
+                    cat = inc.get("categoria", "altre")
+                    if cat not in temps_per_categoria:
+                        temps_per_categoria[cat] = []
+                    temps_per_categoria[cat].append(diff)
+                except:
+                    pass
+        
+        temps_mig = sum(temps_resolucio) / len(temps_resolucio) if temps_resolucio else 0
+        temps_mig_per_categoria = {}
+        for cat, temps in temps_per_categoria.items():
+            temps_mig_per_categoria[cat] = round(sum(temps) / len(temps), 2)
+        
+        dies_mes_incidencies = sorted(evolucio_diaria.items(), key=lambda x: x[1], reverse=True)[:5]
+        
+        start = datetime(year, month, 1)
+        if month == 12:
+            end = datetime(year + 1, 1, 1)
+        else:
+            end = datetime(year, month + 1, 1)
+        dies_del_mes = (end - start).days
+        
+        mitjana_creades = round(total / dies_del_mes, 2) if total > 0 else 0
+        mitjana_resoltes = round(resoltes / dies_del_mes, 2) if resoltes > 0 else 0
+        
+        top_categories = sorted(per_categoria.items(), key=lambda x: x[1], reverse=True)[:3]
+        top_proveidors = sorted(per_proveidor.items(), key=lambda x: x[1], reverse=True)[:3]
+        
+        return {
+            "tipus": "mensual",
+            "mes": month,
+            "any": year,
+            "data_inici": start.strftime("%Y-%m-%d"),
+            "data_fi": (end - timedelta(days=1)).strftime("%Y-%m-%d"),
+            "metriques": {
+                "total_creades": total,
+                "total_resoltes": resoltes,
+                "total_tancades": tancades,
+                "actives": actives,
+                "mitjana_creades_per_dia": mitjana_creades,
+                "mitjana_resoltes_per_dia": mitjana_resoltes,
+                "tendencia": "estable",
+                "critiques_no_resoltes": len([i for i in filtered if i.get("prioritat") == 1 and i.get("estat") in ("oberta", "en curs")]),
+                "top_categories": [{"categoria": k, "total": v} for k, v in top_categories],
+                "top_proveidors": [{"proveidor": k, "total": v} for k, v in top_proveidors],
+                "per_prioritat": per_prioritat,
+                "per_estat": per_estat,
+                "temps_mig_resolucio_hores": round(temps_mig, 2),
+                "temps_mig_per_categoria": temps_mig_per_categoria,
+                "evolucio_diaria": evolucio_diaria,
+                "dies_mes_incidencies": [{"data": k, "total": v} for k, v in dies_mes_incidencies]
+            },
+            "incidencies": [i.get("id") for i in filtered]
+        }
+
+
+if __name__ == "__main__":
+    generator = ReportGenerator()
+    
+    # Exemple d'ús
+    print("=== INFORME DIARI ===")
+    daily = generator.generate_daily_report("2026-07-16")
+    print(json.dumps(daily, indent=2, ensure_ascii=False))
+    
+    print("\n=== INFORME SETMANAL ===")
+    weekly = generator.generate_weekly_report(2026, 29)
+    print(json.dumps(weekly, indent=2, ensure_ascii=False))
+    
+    print("\n=== INFORME MENSUAL ===")
+    monthly = generator.generate_monthly_report(2026, 7)
+    print(json.dumps(monthly, indent=2, ensure_ascii=False))
+```
+
+
+## Resposta de la IA (guardies-ia)
+
+```html
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestió de Fotos - IA-Productiva</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #1a1a2e;
+        }
+
+        h2 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #1a1a2e;
+        }
+
+        .incident-selector {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .selector-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .selector-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .selector-group input,
+        .selector-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .incident-info {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: #555;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .incident-info strong {
+            color: #333;
+        }
+
+        .upload-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .dropzone {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.3s, background-color 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .dropzone:hover,
+        .dropzone.dragover {
+            border-color: #4361ee;
+            background-color: #f0f4ff;
+        }
+
+        .dropzone p {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .dropzone .icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            color: #4361ee;
+        }
+
+        .file-list {
+            margin-bottom: 15px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+        }
+
+        .file-item .file-name {
+            flex: 1;
+        }
+
+        .file-item .file-size {
+            color: #888;
+            margin: 0 15px;
+        }
+
+        .file-item .file-remove {
+            color: #e63946;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .upload-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar .progress-fill {
+            height: 100%;
+            background: #4361ee;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .gallery-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .gallery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .gallery-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.02);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .gallery-item .item-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px 12px;
+            font-size: 0.75rem;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+        }
+
+        .gallery-item:hover .item-overlay {
+            transform: translateY(0);
+        }
+
+        .gallery-item .item-checkbox {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            z-index: 2;
+        }
+
+        .gallery-item .item-delete {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #e63946;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .gallery-item:hover .item-delete {
+            opacity: 1;
+        }
+
+        .empty-gallery {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 90vh;
+            display: block;
+            border-radius: 4px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+
+        .modal-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .modal-nav.prev {
+            left: -60px;
+        }
+
+        .modal-nav.next {
+            right: -60px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #4361ee;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3a56d4;
+        }
+
+        .btn-primary:disabled {
+            background-color: #a0b0f0;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background-color: #d0d0d0;
+        }
+
+        .btn-danger {
+            background-color: #e63946;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c1121f;
+        }
+
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+
+        .message {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .modal-nav.prev {
+                left: 10px;
+            }
+            .modal-nav.next {
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gestió de Fotos</h1>
+
+        <div id="message" class="message"></div>
+
+        <div class="incident-selector">
+            <div class="selector-group">
+                <label for="incidentSearch">Cerca per ID o títol</label>
+                <input type="text" id="incidentSearch" placeholder="Ex: INC-20260716-0001" oninput="filterIncidents()">
+            </div>
+            <div class="selector-group">
+                <label for="incidentSelect">Selecciona incidència</label>
+                <select id="incidentSelect" onchange="onIncidentChange()">
+                    <option value="">-- Selecciona --</option>
+                </select>
+            </div>
+            <div class="incident-info" id="incidentInfo">
+                Selecciona una incidència per gestionar les seves fotos.
+            </div>
+        </div>
+
+        <div class="upload-section" id="uploadSection" style="display: none;">
+            <h2>Penjar fotos</h2>
+            <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+                <div class="icon">📁</div>
+                <p>Arrossega i solta les fotos aquí o fes clic per seleccionar</p>
+                <p style="font-size: 0.8rem; color: #aaa;">Formats: JPG, PNG, GIF. Màxim 10 MB per fitxer.</p>
+            </div>
+            <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.gif" style="display: none;" onchange="handleFiles(this.files)">
+            <div class="file-list" id="fileList"></div>
+            <div class="upload-actions">
+                <button class="btn btn-primary" id="uploadBtn" onclick="uploadPhotos()" disabled>Penjar fotos</button>
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="gallery-section" id="gallerySection" style="display: none;">
+            <div class="gallery-header">
+                <h2>Galeria de fotos</h2>
+                <div class="gallery-actions">
+                    <button class="btn btn-danger btn-sm" id="deleteSelectedBtn" onclick="deleteSelected()" style="display: none;">Eliminar seleccionades</button>
+                </div>
+            </div>
+            <div class="gallery-grid" id="galleryGrid"></div>
+            <div class="empty-gallery" id="emptyGallery">Selecciona una incidència per veure les seves fotos.</div>
+        </div>
+    </div>
+
+    <div class="modal" id="photoModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closePhotoModal()">&times;</button>
+            <button class="modal-nav prev" onclick="navigatePhoto(-1)">&#10094;</button>
+            <img id="modalImage" src="" alt="Foto ampliada">
+            <button class="modal-nav next" onclick="navigatePhoto(1)">&#10095;</button>
+        </div>
+    </div>
+
+    <script>
+        let incidents = {
+            "INC-20260716-0001": {
+                titol: "El servidor web no respon",
+                estat: "oberta",
+                fotos: []
+            },
+            "INC-20260716-0002": {
+                titol: "Pantalla blava a l'oficina 3B",
+                estat: "resolta",
+                fotos: [
+                    { name: "photo-001.jpg", size: 204800, url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%234361ee'/%3E%3Ctext x='50%25' y='50%25' fill='white' font-size='20' text-anchor='middle' dy='.3em'%3EPantalla blava%3C/text%3E%3C/svg%3E" },
+                    { name: "photo-002.jpg", size: 153600, url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%232a9d8f'/%3E%3Ctext x='50%25' y='50%25' fill='white' font-size='20' text-anchor='middle' dy='.3em'%3EOrdinador%3C/text%3E%3C/svg%3E" }
+                ]
+            },
+            "INC-20260717-0001": {
+                titol: "Impressora no funciona",
+                estat: "oberta",
+                fotos: [
+                    { name: "photo-001.jpg", size: 102400, url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%23e63946'/%3E%3Ctext x='50%25' y='50%25' fill='white' font-size='20' text-anchor='middle' dy='.3em'%3EImpressora%3C/text%3E%3C/svg%3E" }
+                ]
+            }
+        };
+
+        let selectedIncidentId = null;
+        let pendingFiles = [];
+        let currentPhotoIndex = -1;
+        let currentPhotos = [];
+
+        function init() {
+            populateIncidentSelect(Object.keys(incidents));
+            setupDragDrop();
+        }
+
+        function populateIncidentSelect(ids) {
+            const select = document.getElementById('incidentSelect');
+            select.innerHTML = '<option value="">-- Selecciona --</option>';
+            ids.forEach(id => {
+                const incident = incidents[id];
+                if (incident) {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = `${id} - ${incident.titol}`;
+                    select.appendChild(option);
+                }
+            });
+        }
+
+        function filterIncidents() {
+            const searchTerm = document.getElementById('incidentSearch').value.toLowerCase();
+            const filteredIds = Object.keys(incidents).filter(id => {
+                const incident = incidents[id];
+                return id.toLowerCase().includes(searchTerm) || incident.titol.toLowerCase().includes(searchTerm);
+            });
+            populateIncidentSelect(filteredIds);
+        }
+
+        function onIncidentChange() {
+            const select = document.getElementById('incidentSelect');
+            selectedIncidentId = select.value;
+
+            if (selectedIncidentId) {
+                const incident = incidents[selectedIncidentId];
+                document.getElementById('incidentInfo').innerHTML = `
+                    <strong>ID:</strong> ${selectedIncidentId}<br>
+                    <strong>Títol:</strong> ${incident.titol}<br>
+                    <strong>Estat:</strong> ${incident.estat}<br>
+                    <strong>Fotos:</strong> ${incident.fotos.length}
+                `;
+                document.getElementById('uploadSection').style.display = 'block';
+                document.getElementById('gallerySection').style.display = 'block';
+                renderGallery(selectedIncidentId);
+            } else {
+                document.getElementById('incidentInfo').textContent = 'Selecciona una incidència per gestionar les seves fotos.';
+                document.getElementById('uploadSection').style.display = 'none';
+                document.getElementById('gallerySection').style.display = 'none';
+            }
+        }
+
+        function setupDragDrop() {
+            const dropzone = document.getElementById('dropzone');
+            dropzone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropzone
+
+
+## Resposta de la IA (guardies-ia)
+
+```html
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestió de Notes - IA-Productiva</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #1a1a2e;
+        }
+
+        h2 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #1a1a2e;
+        }
+
+        .incident-selector {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .selector-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .selector-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .selector-group input,
+        .selector-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .incident-info {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: #555;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .incident-info strong {
+            color: #333;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #4361ee;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3a56d4;
+        }
+
+        .btn-primary:disabled {
+            background-color: #a0b0f0;
+            cursor: not-allowed;
+        }
+
+        .btn-danger {
+            background-color: #e63946;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c1121f;
+        }
+
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+
+        .note-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4361ee;
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .char-counter {
+            font-size: 0.75rem;
+            color: #888;
+            text-align: right;
+            margin-top: 5px;
+        }
+
+        .char-counter.warning {
+            color: #e63946;
+        }
+
+        .notes-list {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .note-item {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .note-item:last-child {
+            border-bottom: none;
+        }
+
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .note-author {
+            font-weight: 600;
+            color: #4361ee;
+        }
+
+        .note-date {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .note-text {
+            font-size: 0.9rem;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .note-actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .empty-notes {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        .message {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .note-item {
+            animation: fadeIn 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gestió de Notes</h1>
+        <div id="message" class="message"></div>
+
+        <div class="incident-selector">
+            <div class="selector-group">
+                <label for="incidentSearch">Cerca per ID o títol</label>
+                <input type="text" id="incidentSearch" placeholder="Ex: INC-20260716-0001" oninput="filterIncidents()">
+            </div>
+            <div class="selector-group">
+                <label for="incidentSelect">Selecciona incidència</label>
+                <select id="incidentSelect" onchange="onIncidentChange()">
+                    <option value="">-- Selecciona --</option>
+                </select>
+            </div>
+            <div class="incident-info" id="incidentInfo">
+                Selecciona una incidència per gestionar les seves notes.
+            </div>
+        </div>
+
+        <div class="note-form" id="noteForm" style="display: none;">
+            <h2>Afegir nota</h2>
+            <div class="form-group">
+                <label for="noteAuthor">Autor *</label>
+                <input type="text" id="noteAuthor" placeholder="El teu nom" required>
+            </div>
+            <div class="form-group">
+                <label for="noteText">Text de la nota *</label>
+                <textarea id="noteText" placeholder="Descriu el comentari..." maxlength="1000" required oninput="updateCharCount()"></textarea>
+                <div class="char-counter" id="charCounter"><span id="charCount">0</span> / 1000</div>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-primary" id="addNoteBtn" onclick="addNote()">Afegir nota</button>
+            </div>
+        </div>
+
+        <div class="notes-list" id="notesList">
+            <h2>Notes</h2>
+            <div class="empty-notes" id="emptyNotes">
+                Selecciona una incidència per veure les seves notes.
+            </div>
+            <div id="notesContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        let incidents = {
+            "INC-20260716-0001": {
+                titol: "El servidor web no respon",
+                estat: "oberta",
+                notes: [
+                    { data: "2026-07-16T10:30:00Z", autor: "Maria Garcia", text: "He revisat el servidor. El problema sembla ser un error de configuració." },
+                    { data: "2026-07-16T11:00:00Z", autor: "Joan Martínez", text: "He aplicat un pedaç temporal. Caldrà una solució definitiva." }
+                ]
+            },
+            "INC-20260716-0002": {
+                titol: "Pantalla blava a l'oficina 3B",
+                estat: "en curs",
+                notes: []
+            },
+            "INC-20260717-0001": {
+                titol: "Impressora no funciona",
+                estat: "oberta",
+                notes: [
+                    { data: "2026-07-17T09:15:00Z", autor: "Pep Sánchez", text: "He comprovat el cablejat. Sembla que el tòner està buit." }
+                ]
+            }
+        };
+
+        let selectedIncidentId = null;
+
+        function init() {
+            populateIncidentSelect(Object.keys(incidents));
+            updateCharCount();
+        }
+
+        function populateIncidentSelect(ids) {
+            const select = document.getElementById('incidentSelect');
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">-- Selecciona --</option>';
+            ids.forEach(id => {
+                const incident = incidents[id];
+                if (incident) {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = `${id} - ${incident.titol}`;
+                    select.appendChild(option);
+                }
+            });
+            if (currentValue && ids.includes(currentValue)) {
+                select.value = currentValue;
+            }
+        }
+
+        function filterIncidents() {
+            const searchTerm = document.getElementById('incidentSearch').value.toLowerCase();
+            const filteredIds = Object.keys(incidents).filter(id => {
+                const incident = incidents[id];
+                return id.toLowerCase().includes(searchTerm) || incident.titol.toLowerCase().includes(searchTerm);
+            });
+            populateIncidentSelect(filteredIds);
+        }
+
+        function onIncidentChange() {
+            const select = document.getElementById('incidentSelect');
+            selectedIncidentId = select.value;
+            if (selectedIncidentId) {
+                const incident = incidents[selectedIncidentId];
+                document.getElementById('incidentInfo').innerHTML = `
+                    <strong>ID:</strong> ${selectedIncidentId}<br>
+                    <strong>Títol:</strong> ${incident.titol}<br>
+                    <strong>Estat:</strong> ${incident.estat}
+                `;
+                document.getElementById('noteForm').style.display = 'block';
+                renderNotes(selectedIncidentId);
+            } else {
+                document.getElementById('incidentInfo').textContent = 'Selecciona una incidència per gestionar les seves notes.';
+                document.getElementById('noteForm').style.display = 'none';
+                document.getElementById('notesContainer').innerHTML = '';
+                document.getElementById('emptyNotes').style.display = 'block';
+            }
+        }
+
+        function renderNotes(incidentId) {
+            const container = document.getElementById('notesContainer');
+            const emptyNotes = document.getElementById('emptyNotes');
+            const incident = incidents[incidentId];
+            if (!incident || !incident.notes || incident.notes.length === 0) {
+                container.innerHTML = '';
+                emptyNotes.style.display = 'block';
+                emptyNotes.textContent = 'No hi ha notes per a aquesta incidència. Afegeix la primera nota.';
+                return;
+            }
+            emptyNotes.style.display = 'none';
+            const sortedNotes = [...incident.notes].sort((a, b) => new Date(b.data) - new Date(a.data));
+            container.innerHTML = sortedNotes.map((note, index) => {
+                const formattedDate = formatDate(note.data);
+                return `
+                    <div class="note-item">
+                        <div class="note-header">
+                            <span class="note-author">${escapeHtml(note.autor)}</span>
+                            <span class="note-date">${formattedDate}</span>
+                        </div>
+                        <div class="note-text">${escapeHtml(note.text)}</div>
+                        <div class="note-actions">
+                            <button class="btn btn-danger btn-sm" onclick="deleteNote(${index})">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addNote() {
+            const author = document.getElementById('noteAuthor').value.trim();
+            const text = document.getElementById('noteText').value.trim();
+            if (!author) { showMessage('error', 'L\'autor no pot estar buit.'); return; }
+            if (!text) { showMessage('error', 'El text de la nota no pot estar buit.'); return; }
+            if (text.length > 1000) { showMessage('error', 'El text no pot superar els 1000 caràcters.'); return; }
+            if (!selectedIncidentId) { showMessage('error', 'Selecciona una incidència primer.'); return; }
+
+            const note = { data: new Date().toISOString(), autor: author, text: text };
+            const incident = incidents[selectedIncidentId];
+            if (!incident.notes) incident.notes = [];
+            incident.notes.push(note);
+
+            document.getElementById('noteAuthor').value = '';
+            document.getElementById('noteText').value = '';
+            updateCharCount();
+            renderNotes(selectedIncidentId);
+            showMessage('success', 'Nota afegida correctament.');
+        }
+
+        function deleteNote(index) {
+            if (!selectedIncidentId) return;
+            if (!confirm('Estàs segur que vols eliminar aquesta nota?')) return;
+            const incident = incidents[selectedIncidentId];
+            if (incident && incident.notes) {
+                const sortedNotes = [...incident.notes].sort((a, b) => new Date(b.data) - new Date(a.data));
+                const noteToDelete = sortedNotes[index];
+                const originalIndex = incident.notes.indexOf(noteToDelete);
+                if (originalIndex !== -1) {
+                    incident.notes.splice(originalIndex, 1);
+                    renderNotes(selectedIncidentId);
+                    showMessage('success', 'Nota eliminada correctament.');
+                }
+            }
+        }
+
+        function updateCharCount() {
+            const text = document.getElementById('noteText').value;
+            document.getElementById('charCount').textContent = text.length;
+            const counter = document.getElementById('charCounter');
+            if (text.length > 900) counter.classList.add('warning');
+            else counter.classList.remove('warning');
+        }
+
+        function formatDate(dateStr) {
+            try {
+                const d = new Date(dateStr);
+                return d.toLocaleDateString('ca-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            } catch { return dateStr; }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showMessage(type, text) {
+            const msg = document.getElementById('message');
+            msg.className = `message ${type}`;
+            msg.textContent = text;
+            setTimeout(() => { msg.className = 'message'; msg.textContent = ''; }, 3000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
+```
+
+
+## Resposta de la IA (guardies-ia)
+
+```python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+Mòdul per exportar incidències en formats CSV i PDF.
+
+Segueix l'especificació definida a:
+    content/templates/export-system.md
+
+Dependències:
+    - content/templates/incident-template.md
+    - content/templates/report-generation.md
+    - data/incidents/
+"""
+
+import csv
+import json
+import os
+from datetime import datetime
+from pathlib import Path
+from typing import List, Optional
+
+# --- Constants ---
+
+# Directori per defecte per a les exportacions
+EXPORTS_DIR = Path("exports")
+
+# Directori de les incidències
+INCIDENTS_DIR = Path("data") / "incidents"
+
+# Formats de data permesos
+DATE_FORMATS = {
+    "DD/MM/AAAA": "%d/%m/%Y",
+    "AAAA-MM-DD": "%Y-%m-%d",
+}
+
+# Columnes per defecte per a l'exportació CSV
+CSV_COLUMNS = [
+    "ID",
+    "Títol",
+    "Descripció",
+    "Data de creació",
+    "Data de resolució",
+    "Prioritat",
+    "Estat",
+    "Ubicació",
+    "Categoria",
+    "Proveïdor assignat",
+    "Notes",
+]
+
+
+class ExportError(Exception):
+    """Excepció base per a errors d'exportació."""
+    pass
+
+
+class ExportData:
+    """Gestiona l'exportació de dades en formats CSV i PDF."""
+
+    def __init__(self, output_dir: Path = EXPORTS_DIR):
+        """
+        Inicialitza l'exportador de dades.
+
+        Args:
+            output_dir: Directori per a les exportacions. Per defecte: exports/.
+        """
+        self.output_dir = Path(output_dir)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+
+    def _load_incident(self, incident_id: str) -> dict:
+        """
+        Carrega una incidència des del fitxer JSON.
+
+        Args:
+            incident_id: Identificador de la incidència (ex: INC-20260716-0001).
+
+        Returns:
+            Diccionari amb les dades de la incidència.
+
+        Raises:
+            ExportError: Si el fitxer no existeix o no es pot llegir.
+        """
+        # Buscar el fitxer JSON de la incidència
+        # Format: data/incidents/INC-20260716-0001.json
+        incident_file = INCIDENTS_DIR / f"{incident_id}.json"
+
+        if not incident_file.exists():
+            raise ExportError(f"Incidència no trobada: {incident_id}")
+
+        try:
+            with open(incident_file, "r", encoding="utf-8") as f:
+                incident = json.load(f)
+        except Exception as e:
+            raise ExportError(f"Error en llegir la incidència {incident_id}: {e}")
+
+        return incident
+
+    def _load_all_incidents(self) -> List[dict]:
+        """
+        Carrega totes les incidències del directori.
+
+        Returns:
+            Llista de diccionaris amb les dades de les incidències.
+        """
+        incidents = []
+        if not INCIDENTS_DIR.exists():
+            return incidents
+
+        for filepath in INCIDENTS_DIR.glob("*.json"):
+            try:
+                with open(filepath, "r", encoding="utf-8") as f:
+                    incident = json.load(f)
+                    if incident:
+                        incidents.append(incident)
+            except Exception:
+                continue  # Ignorar fitxers amb errors
+
+        return incidents
+
+    def _format_date(self, date_str: Optional[str], format: str = "DD/MM/AAAA") -> str:
+        """
+        Formata una data segons el format especificat.
+
+        Args:
+            date_str: Data en format ISO 8601 o None.
+            format: Format de sortida (DD/MM/AAAA o AAAA-MM-DD).
+
+        Returns:
+            Data formatejada o cadena buida si és None.
+        """
+        if not date_str:
+            return ""
+
+        try:
+            dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+            fmt = DATE_FORMATS.get(format, "%d/%m/%Y")
+            return dt.strftime(fmt)
+        except (ValueError, TypeError):
+            return date_str
+
+    def _format_notes(self, notes: Optional[List[dict]]) -> str:
+        """
+        Formata les notes per a l'exportació CSV.
+
+        Args:
+            notes: Llista de notes o None.
+
+        Returns:
+            Notes concatenades separades per "; ".
+        """
+        if not notes:
+            return ""
+
+        formatted = []
+        for note in notes:
+            autor = note.get("autor", "")
+            text = note.get("text", "")
+            formatted.append(f"{autor}: {text}")
+
+        return "; ".join(formatted)
+
+    def export_incident_to_csv(
+        self,
+        incident_id: str,
+        output_dir: Optional[Path] = None,
+        date_format: str = "DD/MM/AAAA",
+    ) -> str:
+        """
+        Exporta una incidència individual a CSV.
+
+        Args:
+            incident_id: Identificador de la incidència.
+            output_dir: Directori de sortida (per defecte: exports/).
+            date_format: Format de data (DD/MM/AAAA o AAAA-MM-DD).
+
+        Returns:
+            Ruta del fitxer CSV generat.
+        """
+        output_dir = Path(output_dir) if output_dir else self.output_dir
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        incident = self._load_incident(incident_id)
+
+        output_file = output_dir / f"{incident_id}.csv"
+
+        with open(output_file, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(CSV_COLUMNS)
+
+            row = [
+                incident.get("ID", ""),
+                incident.get("Títol", ""),
+                incident.get("Descripció", ""),
+                self._format_date(incident.get("Data de creació"), date_format),
+                self._format_date(incident.get("Data de resolució"), date_format),
+                incident.get("Prioritat", ""),
+                incident.get("Estat", ""),
+                incident.get("Ubicació", ""),
+                incident.get("Categoria", ""),
+                incident.get("Proveïdor assignat", ""),
+                self._format_notes(incident.get("Notes")),
+            ]
+            writer.writerow(row)
+
+        return str(output_file)
+
+    def export_all_to_csv(
+        self,
+        output_dir: Optional[Path] = None,
+        date_format: str = "DD/MM/AAAA",
+    ) -> str:
+        """
+        Exporta totes les incidències a CSV.
+
+        Args:
+            output_dir: Directori de sortida (per defecte: exports/).
+            date_format: Format de data (DD/MM/AAAA o AAAA-MM-DD).
+
+        Returns:
+            Ruta del fitxer CSV generat.
+        """
+        output_dir = Path(output_dir) if output_dir else self.output_dir
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        incidents = self._load_all_incidents()
+
+        if not incidents:
+            raise ExportError("No s'han trobat incidències per exportar.")
+
+        output_file = output_dir / "totes_les_incidencies.csv"
+
+        with open(output_file, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(CSV_COLUMNS)
+
+            for incident in incidents:
+                row = [
+                    incident.get("ID", ""),
+                    incident.get("Títol", ""),
+                    incident.get("Descripció", ""),
+                    self._format_date(incident.get("Data de creació"), date_format),
+                    self._format_date(incident.get("Data de resolució"), date_format),
+                    incident.get("Prioritat", ""),
+                    incident.get("Estat", ""),
+                    incident.get("Ubicació", ""),
+                    incident.get("Categoria", ""),
+                    incident.get("Proveïdor assignat", ""),
+                    self._format_notes(incident.get("Notes")),
+                ]
+                writer.writerow(row)
+
+        return str(output_file)
+
+    def export_incident_to_pdf(
+        self,
+        incident_id: str,
+        output_dir: Optional[Path] = None,
+    ) -> str:
+        """
+        Exporta una incidència individual a PDF.
+
+        Args:
+            incident_id: Identificador de la incidència.
+            output_dir: Directori de sortida (per defecte: exports/).
+
+        Returns:
+            Ruta del fitxer PDF generat.
+        """
+        output_dir = Path(output_dir) if output_dir else self.output_dir
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        incident = self._load_incident(incident_id)
+
+        output_file = output_dir / f"{incident_id}.pdf"
+
+        # Generar contingut HTML per al PDF
+        html_content = self._generate_incident_html(incident)
+
+        # Intentar utilitzar weasyprint si està disponible
+        try:
+            from weasyprint import HTML
+            HTML(string=html_content).write_pdf(str(output_file))
+            return str(output_file)
+        except ImportError:
+            pass
+
+        # Intentar utilitzar pdfkit si està disponible
+        try:
+            import pdfkit
+            pdfkit.from_string(html_content, str(output_file))
+            return str(output_file)
+        except ImportError:
+            pass
+
+        # Alternativa: guardar com a HTML si no hi ha cap llibreria PDF
+        html_output = output_dir / f"{incident_id}.html"
+        with open(html_output, "w", encoding="utf-8") as f:
+            f.write(html_content)
+        print(f"PDF no disponible. S'ha generat un HTML: {html_output}")
+        return str(html_output)
+
+    def _generate_incident_html(self, incident: dict) -> str:
+        """
+        Genera contingut HTML per a una incidència.
+
+        Args:
+            incident: Diccionari amb les dades de la incidència.
+
+        Returns:
+            Contingut HTML.
+        """
+        notes_html = ""
+        if incident.get("Notes"):
+            notes_html = "<h3>Notes</h3><ul>"
+            for note in incident["Notes"]:
+                notes_html += f"<li><strong>{note.get('autor', '')}</strong> ({self._format_date(note.get('data', ''))}): {note.get('text', '')}</li>"
+            notes_html += "</ul>"
+
+        fotos_html = ""
+        if incident.get("Fotos"):
+            fotos_html = "<h3>Fotos</h3><ul>"
+            for foto in incident["Fotos"]:
+                fotos_html += f"<li>{foto}</li>"
+            fotos_html += "</ul>"
+
+        html = f"""<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>Incidència {incident.get('ID', '')}</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 40px; }}
+        h1 {{ color: #1a1a2e; }}
+        .field {{ margin-bottom: 10px; }}
+        .label {{ font-weight: bold; color: #555; }}
+        .value {{ color: #333; }}
+    </style>
+</head>
+<body>
+    <h1>Incidència {incident.get('ID', '')}</h1>
+    <div class="field"><span class="label">Títol:</span> <span class="value">{incident.get('Títol', '')}</span></div>
+    <div class="field"><span class="label">Descripció:</span> <span class="value">{incident.get('Descripció', '')}</span></div>
+    <div class="field"><span class="label">Data de creació:</span> <span class="value">{self._format_date(incident.get('Data de creació', ''))}</span></div>
+    <div class="field"><span class="label">Data de resolució:</span> <span class="value">{self._format_date(incident.get('Data de resolució', ''))}</span></div>
+    <div class="field"><span class="label">Prioritat:</span> <span class="value">{incident.get('Prioritat', '')}</span></div>
+    <div class="field"><span class="label">Estat:</span> <span class="value">{incident.get('Estat', '')}</span></div>
+    <div class="field"><span class="label">Ubicació:</span> <span class="value">{incident.get('Ubicació', '')}</span></div>
+    <div class="field"><span class="label">Categoria:</span> <span class="value">{incident.get('Categoria', '')}</span></div>
+    <div class="field"><span class="label">Proveïdor assignat:</span> <span class="value">{incident.get('Proveïdor assignat', '')}</span></div>
+    {notes_html}
+    {fotos_html}
+</body>
+</html>"""
+        return html
+
+
+# --- Exemple d'ús ---
+if __name__ == "__main__":
+    export = ExportData()
+
+    # Exemple: exportar totes les incidències a CSV
+    try:
+        path = export.export_all_to_csv()
+        print(f"Exportació completada: {path}")
+    except ExportError as e:
+        print(f"Error: {e}")
+```
+
+
+## Resposta de la IA (guardies-ia)
+
+```python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+Mòdul per enviar notificacions d'incidències per correu electrònic o Telegram.
+
+Segueix l'especificació del projecte IA-Productiva.
+Dependències:
+    - content/templates/incident-template.md
+    - data/incidents/
+    - data/providers/
+"""
+
+import json
+import os
+import smtplib
+import requests
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from pathlib import Path
+from typing import Optional, List
+from datetime import datetime
+
+
+# --- Constants ---
+
+# Directori de configuració
+CONFIG_DIR = Path("config")
+
+# Fitxer de configuració de notificacions
+NOTIFICATIONS_CONFIG_FILE = CONFIG_DIR / "notifications.json"
+
+# Fitxer de configuració de correu
+EMAIL_CONFIG_FILE = CONFIG_DIR / "email.json"
+
+# Fitxer de configuració de Telegram
+TELEGRAM_CONFIG_FILE = CONFIG_DIR / "telegram.json"
+
+# Directori de les incidències
+INCIDENTS_DIR = Path("data") / "incidents"
+
+
+class NotificationError(Exception):
+    """Excepció base per a errors de notificació."""
+    pass
+
+
+class EmailNotifier:
+    """Gestiona l'enviament de notificacions per correu electrònic."""
+
+    def __init__(self, config_file: Path = EMAIL_CONFIG_FILE):
+        """
+        Inicialitza el notificador de correu.
+
+        Args:
+            config_file: Fitxer de configuració del correu.
+        """
+        self.config = self._load_config(config_file)
+
+    def _load_config(self, config_file: Path) -> dict:
+        """
+        Carrega la configuració del correu.
+
+        Args:
+            config_file: Fitxer de configuració.
+
+        Returns:
+            Diccionari amb la configuració.
+
+        Raises:
+            NotificationError: Si el fitxer no existeix o no és vàlid.
+        """
+        if not config_file.exists():
+            raise NotificationError(
+                f"Fitxer de configuració no trobat: {config_file}. "
+                f"Crea'l amb el format: {{'smtp_server': '...', 'smtp_port': 587, 'username': '...', 'password': '...', 'from_address': '...'}}"
+            )
+
+        try:
+            with open(config_file, "r", encoding="utf-8") as f:
+                config = json.load(f)
+        except Exception as e:
+            raise NotificationError(f"Error en llegir la configuració: {e}")
+
+        required_fields = ["smtp_server", "smtp_port", "username", "password", "from_address"]
+        for field in required_fields:
+            if field not in config:
+                raise NotificationError(f"Camp obligatori faltant a la configuració: {field}")
+
+        return config
+
+    def send_notification(
+        self,
+        to_address: str,
+        subject: str,
+        body: str,
+        html_body: Optional[str] = None,
+    ) -> bool:
+        """
+        Envia una notificació per correu electrònic.
+
+        Args:
+            to_address: Adreça de correu del destinatari.
+            subject: Assumpte del correu.
+            body: Cos del correu en text pla.
+            html_body: Cos del correu en HTML (opcional).
+
+        Returns:
+            True si s'ha enviat correctament.
+
+        Raises:
+            NotificationError: Si hi ha un error en l'enviament.
+        """
+        try:
+            msg = MIMEMultipart("alternative")
+            msg["From"] = self.config["from_address"]
+            msg["To"] = to_address
+            msg["Subject"] = subject
+
+            # Afegir el cos en text pla
+            msg.attach(MIMEText(body, "plain", "utf-8"))
+
+            # Afegir el cos en HTML si es proporciona
+            if html_body:
+                msg.attach(MIMEText(html_body, "html", "utf-8"))
+
+            # Connectar al servidor SMTP i enviar
+            with smtplib.SMTP(self.config["smtp_server"], self.config["smtp_port"]) as server:
+                server.starttls()
+                server.login(self.config["username"], self.config["password"])
+                server.send_message(msg)
+
+            return True
+
+        except Exception as e:
+            raise NotificationError(f"Error en enviar el correu: {e}")
+
+    def send_incident_notification(
+        self,
+        to_address: str,
+        incident: dict,
+        notification_type: str = "nova",
+    ) -> bool:
+        """
+        Envia una notificació sobre una incidència.
+
+        Args:
+            to_address: Adreça de correu del destinatari.
+            incident: Diccionari amb les dades de la incidència.
+            notification_type: Tipus de notificació (nova, actualitzada, resolta, tancada).
+
+        Returns:
+            True si s'ha enviat correctament.
+        """
+        incident_id = incident.get("ID", "Desconegut")
+        titol = incident.get("Títol", "Sense títol")
+        prioritat = incident.get("Prioritat", "?")
+        estat = incident.get("Estat", "?")
+        ubicacio = incident.get("Ubicació", "?")
+        descripcio = incident.get("Descripció", "")
+
+        if notification_type == "nova":
+            subject = f"[IA-Productiva] Nova incidència: {incident_id} - {titol}"
+            body = f"""S'ha creat una nova incidència.
+
+ID: {incident_id}
+Títol: {titol}
+Prioritat: {prioritat}
+Estat: {estat}
+Ubicació: {ubicacio}
+
+Descripció:
+{descripcio}
+
+--- 
+IA-Productiva - Sistema de Notificacions
+"""
+        elif notification_type == "resolta":
+            subject = f"[IA-Productiva] Incidència resolta: {incident_id} - {titol}"
+            body = f"""La incidència ha estat resolta.
+
+ID: {incident_id}
+Títol: {titol}
+Prioritat: {prioritat}
+Estat: {estat}
+Ubicació: {ubicacio}
+
+--- 
+IA-Productiva - Sistema de Notificacions
+"""
+        else:
+            subject = f"[IA-Productiva] Incidència actualitzada: {incident_id} - {titol}"
+            body = f"""La incidència ha estat actualitzada.
+
+ID: {incident_id}
+Títol: {titol}
+Prioritat: {prioritat}
+Estat: {estat}
+Ubicació: {ubicacio}
+
+--- 
+IA-Productiva - Sistema de Notificacions
+"""
+
+        return self.send_notification(to_address, subject, body)
+
+
+class TelegramNotifier:
+    """Gestiona l'enviament de notificacions per Telegram."""
+
+    def __init__(self, config_file: Path = TELEGRAM_CONFIG_FILE):
+        """
+        Inicialitza el notificador de Telegram.
+
+        Args:
+            config_file: Fitxer de configuració de Telegram.
+        """
+        self.config = self._load_config(config_file)
+
+    def _load_config(self, config_file: Path) -> dict:
+        """
+        Carrega la configuració de Telegram.
+
+        Args:
+            config_file: Fitxer de configuració.
+
+        Returns:
+            Diccionari amb la configuració.
+
+        Raises:
+            NotificationError: Si el fitxer no existeix o no és vàlid.
+        """
+        if not config_file.exists():
+            raise NotificationError(
+                f"Fitxer de configuració no trobat: {config_file}. "
+                f"Crea'l amb el format: {{'bot_token': '...', 'chat_id': '...'}}"
+            )
+
+        try:
+            with open(config_file, "r", encoding="utf-8") as f:
+                config = json.load(f)
+        except Exception as e:
+            raise NotificationError(f"Error en llegir la configuració: {e}")
+
+        required_fields = ["bot_token", "chat_id"]
+        for field in required_fields:
+            if field not in config:
+                raise NotificationError(f"Camp obligatori faltant a la configuració: {field}")
+
+        return config
+
+    def send_notification(self, message: str) -> bool:
+        """
+        Envia una notificació per Telegram.
+
+        Args:
+            message: Missatge a enviar.
+
+        Returns:
+            True si s'ha enviat correctament.
+
+        Raises:
+            NotificationError: Si hi ha un error en l'enviament.
+        """
+        try:
+            url = f"https://api.telegram.org/bot{self.config['bot_token']}/sendMessage"
+            payload = {
+                "chat_id": self.config["chat_id"],
+                "text": message,
+                "parse_mode": "HTML",
+            }
+            response = requests.post(url, json=payload, timeout=10)
+
+            if response.status_code != 200:
+                raise NotificationError(
+                    f"Error en enviar el missatge: {response.status_code} - {response.text}"
+                )
+
+            return True
+
+        except requests.exceptions.RequestException as e:
+            raise NotificationError(f"Error de connexió amb Telegram: {e}")
+
+    def send_incident_notification(
+        self,
+        incident: dict,
+        notification_type: str = "nova",
+    ) -> bool:
+        """
+        Envia una notificació sobre una incidència per Telegram.
+
+        Args:
+            incident: Diccionari amb les dades de la incidència.
+            notification_type: Tipus de notificació (nova, actualitzada, resolta, tancada).
+
+        Returns:
+            True si s'ha enviat correctament.
+        """
+        incident_id = incident.get("ID", "Desconegut")
+        titol = incident.get("Títol", "Sense títol")
+        prioritat = incident.get("Prioritat", "?")
+        estat = incident.get("Estat", "?")
+        ubicacio = incident.get("Ubicació", "?")
+        descripcio = incident.get("Descripció", "")
+
+        # Truncar la descripció si és massa llarga
+        if len(descripcio) > 200:
+            descripcio = descripcio[:200] + "..."
+
+        emoji_prioritat = {1: "🔴", 2: "🟠", 3: "🟡", 4: "🔵", 5: "🟢"}
+        emoji_estat = {"oberta": "🆕", "en curs": "🔄", "resolta": "✅", "tancada": "🔒"}
+        emoji_tipus = {"nova": "🆕", "actualitzada": "🔄", "resolta": "✅", "tancada": "🔒"}
+
+        prioritat_emoji = emoji_prioritat.get(prioritat, "⚪")
+        estat_emoji = emoji_estat.get(estat, "❓")
+        tipus_emoji = emoji_tipus.get(notification_type, "📝")
+
+        message = f"""{tipus_emoji} <b>Incidència {notification_type.upper()}</b>
+
+<b>ID:</b> {incident_id}
+<b>Títol:</b> {titol}
+<b>Prioritat:</b> {prioritat_emoji} {prioritat}
+<b>Estat:</b> {estat_emoji} {estat}
+<b>Ubicació:</b> {ubicacio}
+
+<b>Descripció:</b>
+{descripcio}
+
+---
+IA-Productiva · Sistema de Notificacions"""
+
+        return self.send_notification(message)
+
+
+class NotificationManager:
+    """Gestiona l'enviament de notificacions per múltiples canals."""
+
+    def __init__(self, config_file: Path = NOTIFICATIONS_CONFIG_FILE):
+        """
+        Inicialitza el gestor de notificacions.
+
+        Args:
+            config_file: Fitxer de configuració de notificacions.
+        """
+        self.config = self._load_config(config_file)
+        self.email_notifier = None
+        self.telegram_notifier = None
+
+        # Inicialitzar els notificadors segons la configuració
+        if self.config.get("email", {}).get("enabled", False):
+            try:
+                self.email_notifier = EmailNotifier()
+            except NotificationError as e:
+                print(f"Avís: No es pot inicialitzar el notificador de correu: {e}")
+
+        if self.config.get("telegram", {}).get("enabled", False):
+            try:
+                self.telegram_notifier = TelegramNotifier()
+            except NotificationError as e:
+                print(f"Avís: No es pot inicialitzar el notificador de Telegram: {e}")
+
+    def _load_config(self, config_file: Path) -> dict:
+        """
+        Carrega la configuració de notificacions.
+
+        Args:
+            config_file: Fitxer de configuració.
+
+        Returns:
+            Diccionari amb la configuració.
+        """
+        default_config = {
+            "email": {
+                "enabled": False,
+                "recipients": []
+            },
+            "telegram": {
+                "enabled": False
+            },
+            "notify_on": {
+                "nova": True,
+                "actualitzada": True,
+                "resolta": True,
+                "tancada": False
+            }
+        }
+
+        if not config_file.exists():
+            # Crear el fitxer de configuració per defecte
+            config_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(config_file, "w", encoding="utf-8") as f:
+                json.dump(default_config, f, indent=2, ensure_ascii=False)
+            return default_config
+
+        try:
+            with open(config_file, "r", encoding="utf-8") as f:
+                config = json.load(f)
+            # Fusionar amb la configuració per defecte
+            for key in default_config:
+                if key not in config:
+                    config[key] = default_config[key]
+            return config
+        except Exception:
+            return default_config
+
+    def _load_incident(self, incident_id: str) -> dict:
+        """
+        Carrega una incidència des del fitxer JSON.
+
+        Args:
+            incident_id: Identificador de la incidència.
+
+        Returns:
+            Diccionari amb les dades de la incidència.
+
+        Raises:
+            NotificationError: Si el fitxer no existeix.
+        """
+        incident_file = INCIDENTS_DIR / f"{incident_id}.json"
+
+        if not incident_file.exists():
+            # Provar amb extensió .yaml
+            incident_file = INCIDENTS_DIR / f"{incident_id}.yaml"
+            if not incident_file.exists():
+                raise NotificationError(f"Incidència no trobada: {incident_id}")
+
+        try:
+            with open(incident_file, "r", encoding="utf-8") as f:
+                if incident_file.suffix == ".json":
+                    return json.load(f)
+                else:
+                    import yaml
+                    return yaml.safe_load(f)
+        except Exception as e:
+            raise NotificationError(f"Error en llegir la incidència: {e}")
+
+    def notify(
+        self,
+        incident_id: str,
+        notification_type: str = "nova",
+    ) -> dict:
+        """
+        Envia notificacions per tots els canals configurats.
+
+        Args:
+            incident_id: Identificador de la incidència.
+            notification_type: Tipus de notificació (nova, actualitzada, resolta, tancada).
+
+        Returns:
+            Diccionari amb els resultats de l'enviament.
+        """
+        results = {"email": False, "telegram": False}
+
+        # Comprovar si s'ha de notificar per a aquest tipus
+        if not self.config.get("notify_on", {}).get(notification_type, True):
+            return results
+
+        try:
+            incident = self._load_incident(incident_id)
+        except NotificationError as e:
+            print(f"Error: {e}")
+            return results
+
+        # Enviar per correu
+        if self.email_notifier and self.config.get("email", {}).get("recipients"):
+            for recipient in self.config["email"]["recipients"]:
+                try:
+                    self.email_notifier.send_incident_notification(
+                        recipient, incident, notification_type
+                    )
+                    results["email"] = True
+                except NotificationError as e:
+                    print(f"Error en enviar correu a {recipient}: {e}")
+
+        # Enviar per Telegram
+        if self.telegram_notifier:
+            try:
+                self.telegram_notifier.send_incident_notification(
+                    incident, notification_type
+                )
+                results["telegram"] = True
+            except NotificationError as e:
+                print(f"Error en enviar Telegram: {e}")
+
+        return results
+
+
+# --- Exemple d'ús ---
+if __name__ == "__main__":
+    # Exemple: enviar notificació per a una incidència
+    manager = NotificationManager()
+
+    # Provar d'enviar una notificació
+    try:
+        result = manager.notify("INC-20260716-0001", "nova")
+        print(f"Resultat de la notificació: {result}")
+    except Exception as e:
+        print(f"Error: {e}")
+```
+
+
+## Resposta de la IA (guardies-ia)
+
+```markdown
+# Sistema d'Integració amb Calendari
+
+## Propòsit
+Aquest document defineix com es gestiona la integració de les incidències amb un calendari (Google Calendar, Outlook, etc.) dins del projecte IA-Productiva.
+
+---
+
+# Esdeveniments de calendari
+
+Cada incidència pot generar un o més esdeveniments de calendari:
+
+- **Data límit de resolució**: Esdeveniment amb la data de resolució prevista.
+- **Recordatori de seguiment**: Esdeveniment per fer seguiment de la incidència.
+- **Reunió de revisió**: Esdeveniment per revisar l'estat de la incidència.
+
+---
+
+# Estructura de l'esdeveniment
+
+| Camp | Descripció |
+|------|------------|
+| `títol` | Títol de l'esdeveniment (inclou ID de la incidència). |
+| `descripció` | Descripció de la incidència. |
+| `data_inici` | Data i hora d'inici de l'esdeveniment. |
+| `data_fi` | Data i hora de fi de l'esdeveniment. |
+| `ubicació` | Ubicació de la incidència. |
+| `recordatoris` | Llista de recordatoris (minuts abans). |
+
+---
+
+# Operacions Suportades
+
+## Crear esdeveniment
+
+1. Carrega la incidència des del fitxer YAML.
+2. Genera un esdeveniment de calendari amb les dades de la incidència.
+3. Envia l'esdeveniment al calendari configurat.
+
+## Actualitzar esdeveniment
+
+1. Carrega la incidència des del fitxer YAML.
+2. Actualitza l'esdeveniment de calendari corresponent.
+3. Envia l'actualització al calendari configurat.
+
+## Eliminar esdeveniment
+
+1. Carrega la incidència des del fitxer YAML.
+2. Elimina l'esdeveniment de calendari corresponent.
+3. Envia l'eliminació al calendari configurat.
+
+---
+
+# Integració amb Google Calendar
+
+Per integrar amb Google Calendar, cal:
+
+1. Crear un projecte a Google Cloud Console.
+2. Habilitar l'API de Google Calendar.
+3. Crear unes credencials OAuth 2.0.
+4. Configurar el fitxer `config/calendar.json` amb les credencials.
+
+---
+
+# Fitxer de configuració
+
+```json
+{
+  "provider": "google",
+  "credentials_file": "config/google-credentials.json",
+  "token_file": "config/google-token.json",
+  "calendar_id": "primary",
+  "default_reminders": [15, 30, 60],
+  "event_duration_minutes": 60
+}
+```
+
+---
+
+# Dependències
+
+- `content/templates/incident-template.md`: definició dels camps de la incidència.
+- `config/calendar.json`: configuració del calendari.
+- Llibreria: `google-api-python-client`, `google-auth-oauthlib`.
+```
+
+
+## Resposta de la IA (guardies-ia)
+
+```markdown
+# Sistema d'Estadístiques i Gràfics
+
+## Propòsit
+Aquest document defineix com es generen i visualitzen estadístiques i gràfics de les incidències dins del projecte IA-Productiva.
+
+---
+
+# Tipus d'Estadístiques
+
+## Estadístiques globals
+- Total d'incidències registrades
+- Distribució per estat (oberta, en curs, resolta, tancada)
+- Distribució per prioritat (1-5)
+- Distribució per categoria
+- Distribució per proveïdor
+- Temps mitjà de resolució (en hores)
+- Incidències creades per dia (sèrie temporal)
+
+## Tendències
+- Evolució setmanal d'incidències creades
+- Evolució mensual d'incidències resoltes
+- Comparativa entre períodes
+
+---
+
+# Gràfics suportats
+
+## Gràfic de barres
+Distribució per estat, prioritat, categoria o proveïdor.
+
+## Gràfic de línies
+Evolució temporal d'incidències creades o resoltes.
+
+## Gràfic de sectors (circular)
+Distribució percentual per estat o categoria.
+
+## Gràfic de dispersió
+Relació entre prioritat i temps de resolució.
+
+---
+
+# Interfície d'usuari
+
+## Secció 1: Selector d'estadístiques
+| Component | Tipus | Comportament |
+|-----------|-------|--------------|
+| Tipus d'estadística | `select` | Valors: `globals`, `tendències`, `per categoria`, `per proveïdor` |
+| Període | `select` | Valors: `últim mes`, `últim trimestre`, `últim any`, `personalitzat` |
+| Data d'inici | `date input` | Visible si període és `personalitzat` |
+| Data de fi | `date input` | Visible si període és `personalitzat` |
+| Botó "Actualitzar" | `button` | Refresca les dades i els gràfics |
+
+## Secció 2: Resum de mètriques
+Targetes amb valors clau:
+- Total incidències
+- Obertes
+- En curs
+- Resoltes
+- Temps mitjà de resolució
+- Incidències crítiques (prioritat 1)
+
+## Secció 3: Gràfics
+Es mostren en una quadrícula de 2 columnes:
+- Gràfic de barres (distribució per estat)
+- Gràfic de sectors (distribució per prioritat)
+- Gràfic de línies (evolució temporal)
+- Gràfic de barres (distribució per categoria)
+
+---
+
+# Dependències
+- `content/templates/incident-template.md`: definició dels camps de la incidència.
+- `data/incidents/`: directori on s'emmagatzemen les incidències.
+- Llibreria: `Chart.js` (CDN) per a la generació de gràfics.
+```
+
+
+## Resposta de la IA (guardies-ia)
+
+```markdown
+# API per a Integracions Externes
+
+## Propòsit
+Aquest document defineix una API REST per permetre la integració de sistemes externs amb el projecte IA-Productiva, facilitant la gestió d'incidències, proveïdors, fotos i notes de forma programàtica.
+
+---
+
+# Consideracions generals
+
+- **Base URL**: `http://localhost:8000/api/v1`
+- **Format de les respostes**: JSON
+- **Autenticació**: Token Bearer (configurable a `config/api.json`)
+- **Codificació**: UTF-8
+- **Errors**: Respostes amb codis HTTP estàndard i missatges descriptius
+
+---
+
+# Autenticació
+
+Totes les peticions han d'incloure la capçalera:
+
+```
+Authorization: Bearer <api_token>
+```
+
+El token es defineix al fitxer `config/api.json`:
+
+```json
+{
+  "api_token": "el_teu_token_secret",
+  "port": 8000
+}
+```
+
+---
+
+# Endpoints
+
+## Incidències
+
+### Llistar incidències
+
+```
+GET /incidents
+```
+
+Paràmetres opcionals:
+
+- `estat` (string): filtra per estat
+- `prioritat` (int): filtra per prioritat
+- `categoria` (string): filtra per categoria
+- `data_inici` (string, ISO 8601): data mínima de creació
+- `data_fi` (string, ISO 8601): data màxima de creació
+- `proveidor` (string): filtra per proveïdor assignat
+- `search` (string): cerca per títol o descripció
+- `limit` (int): nombre màxim de resultats (per defecte 50)
+- `offset` (int): desplaçament per a paginació
+
+Resposta:
+
+```json
+{
+  "total": 100,
+  "limit": 50,
+  "offset": 0,
+  "data": [
+    {
+      "id": "INC-20260716-0001",
+      "titol": "El servidor web no respon",
+      "descripcio": "El servei HTTP al servidor 192.168.1.10 no respon.",
+      "data_creacio": "2026-07-16T10:30:00Z",
+      "data_resolucio": null,
+      "prioritat": 1,
+      "estat": "oberta",
+      "ubicacio": "Servidor Producció",
+      "categoria": "xarxa",
+      "proveidor_assignat": null,
+      "fotos": [],
+      "notes": []
+    }
+  ]
+}
+```
+
+---
+
+### Obtenir una incidència
+
+```
+GET /incidents/{id}
+```
+
+Resposta:
+
+```json
+{
+  "id": "INC-20260716-0001",
+  "titol": "El servidor web no respon",
+  "descripcio": "El servei HTTP al servidor 192.168.1.10 no respon.",
+  "data_creacio": "2026-07-16T10:30:00Z",
+  "data_resolucio": null,
+  "prioritat": 1,
+  "estat": "oberta",
+  "ubicacio": "Servidor Producció",
+  "categoria": "xarxa",
+  "proveidor_assignat": null,
+  "fotos": [],
+  "notes": []
+}
+```
+
+---
+
+### Crear una incidència
+
+```
+POST /incidents
+```
+
+Cos de la petició:
+
+```json
+{
+  "titol": "El servidor web no respon",
+  "descripcio": "El servei HTTP al servidor 192.168.1.10 no respon.",
+  "prioritat": 1,
+  "estat": "oberta",
+  "ubicacio": "Servidor Producció",
+  "categoria": "xarxa",
+  "proveidor_assignat": null
+}
+```
+
+Resposta (201 Created):
+
+```json
+{
+  "id": "INC-20260716-0001",
+  "missatge": "Incidència creada correctament"
+}
+```
+
+---
+
+### Actualitzar una incidència
+
+```
+PUT /incidents/{id}
+```
+
+Cos de la petició (només camps a actualitzar):
+
+```json
+{
+  "estat": "resolta",
+  "data_resolucio": "2026-07-16T14:30:00Z"
+}
+```
+
+Resposta:
+
+```json
+{
+  "id": "INC-20260716-0001",
+  "missatge": "Incidència actualitzada correctament"
+}
+```
+
+---
+
+### Eliminar una incidència
+
+```
+DELETE /incidents/{id}
+```
+
+Resposta (200 OK):
+
+```json
+{
+  "missatge": "Incidència eliminada correctament"
+}
+```
+
+---
+
+## Proveïdors
+
+### Llistar proveïdors
+
+```
+GET /providers
+```
+
+Resposta:
+
+```json
+{
+  "total": 5,
+  "data": [
+    {
+      "id": "PROV-0001",
+      "nom": "Maria Garcia",
+      "telefon": "+34 612345678",
+      "especialitat": "electricitat",
+      "email": "maria@electriques.cat",
+      "empresa": "Electriques del Vallès SL",
+      "notes": "Disponible en horari laboral. Respon en menys de 2 hores."
+    }
+  ]
+}
+```
+
+---
+
+### Obtenir un proveïdor
+
+```
+GET /providers/{id}
+```
+
+---
+
+### Crear un proveïdor
+
+```
+POST /providers
+```
+
+Cos:
+
+```json
+{
+  "nom": "Nou Proveïdor",
+  "telefon": "+34 600000000",
+  "especialitat": "informàtica",
+  "email": "nou@proveidor.com",
+  "empresa": "Nova Empresa SL",
+  "notes": "Disponible 24/7"
+}
+```
+
+---
+
+### Actualitzar un proveïdor
+
+```
+PUT /providers/{id}
+```
+
+---
+
+### Eliminar un proveïdor
+
+```
+DELETE /providers/{id}
+```
+
+---
+
+## Fotos
+
+### Llistar fotos d'una incidència
+
+```
+GET /incidents/{id}/photos
+```
+
+---
+
+### Pujar una foto
+
+```
+POST /incidents/{id}/photos
+```
+
+Tipus de contingut: `multipart/form-data`
+
+Camp: `photo` (fitxer d'imatge)
+
+Resposta (201 Created):
+
+```json
+{
+  "path": "data/photos/20260716/INC-20260716-0001/photo-001.jpg",
+  "missatge": "Foto pujada correctament"
+}
+```
+
+---
+
+### Eliminar una foto
+
+```
+DELETE /photos/{path}
+```
+
+---
+
+## Notes
+
+### Llistar notes d'una incidència
+
+```
+GET /incidents/{id}/notes
+```
+
+---
+
+### Afegir una nota
+
+```
+POST /incidents/{id}/notes
+```
+
+Cos:
+
+```json
+{
+  "autor": "Maria Garcia",
+  "text": "He revisat el servidor. Sembla un error de configuració."
+}
+```
+
+---
+
+### Eliminar una nota
+
+```
+DELETE /incidents/{id}/notes/{note_index}
+```
+
+---
+
+## Informes
+
+### Generar informe diari
+
+```
+GET /reports/daily?date=2026-07-16
+```
+
+---
+
+### Generar informe setmanal
+
+```
+GET /reports/weekly?year=2026&week=29
+```
+
+---
+
+### Generar informe mensual
+
+```
+GET /reports/monthly?year=2026&month=7
+```
+
+---
+
+## Exportació
+
+### Exportar incidències a CSV
+
+```
+GET /exports/csv
+```
+
+Resposta: fitxer CSV amb totes les incidències.
+
+---
+
+### Exportar incidència a PDF
+
+```
+GET /exports/pdf/{id}
+```
+
+Resposta: fitxer PDF de la incidència.
+
+---
+
+# Codis d'error
+
+| Codi | Significat |
+|------|------------|
+| 200 | Èxit |
+| 201 | Creat |
+| 400 | Petició incorrecta (validació) |
+| 401 | No autoritzat (token invàlid) |
+| 404 | No trobat |
+| 500 | Error intern del servidor |
+
+Resposta d'error:
+
+```json
+{
+  "error": "Descripció de l'error",
+  "codi": 400
+}
+```
+
+---
+
+# Implementació de referència
+
+Per implementar l'API, es recomana utilitzar **FastAPI** (Python) o **Flask** (Python).
+
+## Dependències
+
+```
+fastapi==0.104.1
+uvicorn==0.24.0
+python-multipart==0.0.6
+pydantic==2.5.2
+```
+
+## Exemple d'implementació amb FastAPI
+
+El codi d'implementació es troba a `resources/snippets/api.py` i cobreix tots els endpoints descrits en aquest document.
+
+---
+
+# Dependències
+
+- `content/templates/incident-template.md`: definició dels camps de la incidència.
+- `content/templates/provider-template.md`: definició dels camps del proveïdor.
+- `content/templates/photo-storage.md`: sistema d'emmagatzematge de fotos.
+- `content/templates/notes-system.md`: sistema de notes.
+- `content/templates/export-system.md`: sistema d'exportació.
+- `content/templates/report-generation.md`: sistema d'informes.
+- `config/api.json`: configuració de l'API (token, port).
+- `resources/snippets/api.py`: implementació de referència.
+```

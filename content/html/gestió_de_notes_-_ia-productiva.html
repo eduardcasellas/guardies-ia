@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestió de Notes - IA-Productiva</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #1a1a2e;
+        }
+
+        h2 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #1a1a2e;
+        }
+
+        .incident-selector {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .selector-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .selector-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .selector-group input,
+        .selector-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .incident-info {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: #555;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .incident-info strong {
+            color: #333;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #4361ee;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3a56d4;
+        }
+
+        .btn-primary:disabled {
+            background-color: #a0b0f0;
+            cursor: not-allowed;
+        }
+
+        .btn-danger {
+            background-color: #e63946;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c1121f;
+        }
+
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+
+        .note-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4361ee;
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .char-counter {
+            font-size: 0.75rem;
+            color: #888;
+            text-align: right;
+            margin-top: 5px;
+        }
+
+        .char-counter.warning {
+            color: #e63946;
+        }
+
+        .notes-list {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .note-item {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .note-item:last-child {
+            border-bottom: none;
+        }
+
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .note-author {
+            font-weight: 600;
+            color: #4361ee;
+        }
+
+        .note-date {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .note-text {
+            font-size: 0.9rem;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .note-actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .empty-notes {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        .message {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .note-item {
+            animation: fadeIn 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gestió de Notes</h1>
+        <div id="message" class="message"></div>
+
+        <div class="incident-selector">
+            <div class="selector-group">
+                <label for="incidentSearch">Cerca per ID o títol</label>
+                <input type="text" id="incidentSearch" placeholder="Ex: INC-20260716-0001" oninput="filterIncidents()">
+            </div>
+            <div class="selector-group">
+                <label for="incidentSelect">Selecciona incidència</label>
+                <select id="incidentSelect" onchange="onIncidentChange()">
+                    <option value="">-- Selecciona --</option>
+                </select>
+            </div>
+            <div class="incident-info" id="incidentInfo">
+                Selecciona una incidència per gestionar les seves notes.
+            </div>
+        </div>
+
+        <div class="note-form" id="noteForm" style="display: none;">
+            <h2>Afegir nota</h2>
+            <div class="form-group">
+                <label for="noteAuthor">Autor *</label>
+                <input type="text" id="noteAuthor" placeholder="El teu nom" required>
+            </div>
+            <div class="form-group">
+                <label for="noteText">Text de la nota *</label>
+                <textarea id="noteText" placeholder="Descriu el comentari..." maxlength="1000" required oninput="updateCharCount()"></textarea>
+                <div class="char-counter" id="charCounter"><span id="charCount">0</span> / 1000</div>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-primary" id="addNoteBtn" onclick="addNote()">Afegir nota</button>
+            </div>
+        </div>
+
+        <div class="notes-list" id="notesList">
+            <h2>Notes</h2>
+            <div class="empty-notes" id="emptyNotes">
+                Selecciona una incidència per veure les seves notes.
+            </div>
+            <div id="notesContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        let incidents = {
+            "INC-20260716-0001": {
+                titol: "El servidor web no respon",
+                estat: "oberta",
+                notes: [
+                    { data: "2026-07-16T10:30:00Z", autor: "Maria Garcia", text: "He revisat el servidor. El problema sembla ser un error de configuració." },
+                    { data: "2026-07-16T11:00:00Z", autor: "Joan Martínez", text: "He aplicat un pedaç temporal. Caldrà una solució definitiva." }
+                ]
+            },
+            "INC-20260716-0002": {
+                titol: "Pantalla blava a l'oficina 3B",
+                estat: "en curs",
+                notes: []
+            },
+            "INC-20260717-0001": {
+                titol: "Impressora no funciona",
+                estat: "oberta",
+                notes: [
+                    { data: "2026-07-17T09:15:00Z", autor: "Pep Sánchez", text: "He comprovat el cablejat. Sembla que el tòner està buit." }
+                ]
+            }
+        };
+
+        let selectedIncidentId = null;
+
+        function init() {
+            populateIncidentSelect(Object.keys(incidents));
+            updateCharCount();
+        }
+
+        function populateIncidentSelect(ids) {
+            const select = document.getElementById('incidentSelect');
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">-- Selecciona --</option>';
+            ids.forEach(id => {
+                const incident = incidents[id];
+                if (incident) {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = `${id} - ${incident.titol}`;
+                    select.appendChild(option);
+                }
+            });
+            if (currentValue && ids.includes(currentValue)) {
+                select.value = currentValue;
+            }
+        }
+
+        function filterIncidents() {
+            const searchTerm = document.getElementById('incidentSearch').value.toLowerCase();
+            const filteredIds = Object.keys(incidents).filter(id => {
+                const incident = incidents[id];
+                return id.toLowerCase().includes(searchTerm) || incident.titol.toLowerCase().includes(searchTerm);
+            });
+            populateIncidentSelect(filteredIds);
+        }
+
+        function onIncidentChange() {
+            const select = document.getElementById('incidentSelect');
+            selectedIncidentId = select.value;
+            if (selectedIncidentId) {
+                const incident = incidents[selectedIncidentId];
+                document.getElementById('incidentInfo').innerHTML = `
+                    <strong>ID:</strong> ${selectedIncidentId}<br>
+                    <strong>Títol:</strong> ${incident.titol}<br>
+                    <strong>Estat:</strong> ${incident.estat}
+                `;
+                document.getElementById('noteForm').style.display = 'block';
+                renderNotes(selectedIncidentId);
+            } else {
+                document.getElementById('incidentInfo').textContent = 'Selecciona una incidència per gestionar les seves notes.';
+                document.getElementById('noteForm').style.display = 'none';
+                document.getElementById('notesContainer').innerHTML = '';
+                document.getElementById('emptyNotes').style.display = 'block';
+            }
+        }
+
+        function renderNotes(incidentId) {
+            const container = document.getElementById('notesContainer');
+            const emptyNotes = document.getElementById('emptyNotes');
+            const incident = incidents[incidentId];
+            if (!incident || !incident.notes || incident.notes.length === 0) {
+                container.innerHTML = '';
+                emptyNotes.style.display = 'block';
+                emptyNotes.textContent = 'No hi ha notes per a aquesta incidència. Afegeix la primera nota.';
+                return;
+            }
+            emptyNotes.style.display = 'none';
+            const sortedNotes = [...incident.notes].sort((a, b) => new Date(b.data) - new Date(a.data));
+            container.innerHTML = sortedNotes.map((note, index) => {
+                const formattedDate = formatDate(note.data);
+                return `
+                    <div class="note-item">
+                        <div class="note-header">
+                            <span class="note-author">${escapeHtml(note.autor)}</span>
+                            <span class="note-date">${formattedDate}</span>
+                        </div>
+                        <div class="note-text">${escapeHtml(note.text)}</div>
+                        <div class="note-actions">
+                            <button class="btn btn-danger btn-sm" onclick="deleteNote(${index})">Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addNote() {
+            const author = document.getElementById('noteAuthor').value.trim();
+            const text = document.getElementById('noteText').value.trim();
+            if (!author) { showMessage('error', 'L\'autor no pot estar buit.'); return; }
+            if (!text) { showMessage('error', 'El text de la nota no pot estar buit.'); return; }
+            if (text.length > 1000) { showMessage('error', 'El text no pot superar els 1000 caràcters.'); return; }
+            if (!selectedIncidentId) { showMessage('error', 'Selecciona una incidència primer.'); return; }
+
+            const note = { data: new Date().toISOString(), autor: author, text: text };
+            const incident = incidents[selectedIncidentId];
+            if (!incident.notes) incident.notes = [];
+            incident.notes.push(note);
+
+            document.getElementById('noteAuthor').value = '';
+            document.getElementById('noteText').value = '';
+            updateCharCount();
+            renderNotes(selectedIncidentId);
+            showMessage('success', 'Nota afegida correctament.');
+        }
+
+        function deleteNote(index) {
+            if (!selectedIncidentId) return;
+            if (!confirm('Estàs segur que vols eliminar aquesta nota?')) return;
+            const incident = incidents[selectedIncidentId];
+            if (incident && incident.notes) {
+                const sortedNotes = [...incident.notes].sort((a, b) => new Date(b.data) - new Date(a.data));
+                const noteToDelete = sortedNotes[index];
+                const originalIndex = incident.notes.indexOf(noteToDelete);
+                if (originalIndex !== -1) {
+                    incident.notes.splice(originalIndex, 1);
+                    renderNotes(selectedIncidentId);
+                    showMessage('success', 'Nota eliminada correctament.');
+                }
+            }
+        }
+
+        function updateCharCount() {
+            const text = document.getElementById('noteText').value;
+            document.getElementById('charCount').textContent = text.length;
+            const counter = document.getElementById('charCounter');
+            if (text.length > 900) counter.classList.add('warning');
+            else counter.classList.remove('warning');
+        }
+
+        function formatDate(dateStr) {
+            try {
+                const d = new Date(dateStr);
+                return d.toLocaleDateString('ca-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            } catch { return dateStr; }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showMessage(type, text) {
+            const msg = document.getElementById('message');
+            msg.className = `message ${type}`;
+            msg.textContent = text;
+            setTimeout(() => { msg.className = 'message'; msg.textContent = ''; }, 3000);
+        }
+
+        init();
+    </script>
+</body>
+</html>

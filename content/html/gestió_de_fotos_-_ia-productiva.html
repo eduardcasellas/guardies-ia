@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestió de Fotos - IA-Productiva</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #1a1a2e;
+        }
+
+        h2 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #1a1a2e;
+        }
+
+        .incident-selector {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .selector-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .selector-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .selector-group input,
+        .selector-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .incident-info {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: #555;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .incident-info strong {
+            color: #333;
+        }
+
+        .upload-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .dropzone {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.3s, background-color 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .dropzone:hover,
+        .dropzone.dragover {
+            border-color: #4361ee;
+            background-color: #f0f4ff;
+        }
+
+        .dropzone p {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .dropzone .icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            color: #4361ee;
+        }
+
+        .file-list {
+            margin-bottom: 15px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+        }
+
+        .file-item .file-name {
+            flex: 1;
+        }
+
+        .file-item .file-size {
+            color: #888;
+            margin: 0 15px;
+        }
+
+        .file-item .file-remove {
+            color: #e63946;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .upload-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar .progress-fill {
+            height: 100%;
+            background: #4361ee;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .gallery-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .gallery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .gallery-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.02);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .gallery-item .item-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px 12px;
+            font-size: 0.75rem;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+        }
+
+        .gallery-item:hover .item-overlay {
+            transform: translateY(0);
+        }
+
+        .gallery-item .item-checkbox {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            z-index: 2;
+        }
+
+        .gallery-item .item-delete {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #e63946;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .gallery-item:hover .item-delete {
+            opacity: 1;
+        }
+
+        .empty-gallery {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 90vh;
+            display: block;
+            border-radius: 4px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+
+        .modal-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .modal-nav.prev {
+            left: -60px;
+        }
+
+        .modal-nav.next {
+            right: -60px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #4361ee;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3a56d4;
+        }
+
+        .btn-primary:disabled {
+            background-color: #a0b0f0;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background-color: #d0d0d0;
+        }
+
+        .btn-danger {
+            background-color: #e63946;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c1121f;
+        }
+
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+
+        .message {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .modal-nav.prev {
+                left: 10px;
+            }
+            .modal-nav.next {
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gestió de Fotos</h1>
+
+        <div id="message" class="message"></div>
+
+        <div class="incident-selector">
+            <div class="selector-group">
+                <label for="incidentSearch">Cerca per ID o títol</label>
+                <input type="text" id="incidentSearch" placeholder="Ex: INC-20260716-0001" oninput="filterIncidents()">
+            </div>
+            <div class="selector-group">
+                <label for="incidentSelect">Selecciona incidència</label>
+                <select id="incidentSelect" onchange="onIncidentChange()">
+                    <option value="">-- Selecciona --</option>
+                </select>
+            </div>
+            <div class="incident-info" id="incidentInfo">
+                Selecciona una incidència per gestionar les seves fotos.
+            </div>
+        </div>
+
+        <div class="upload-section" id="uploadSection" style="display: none;">
+            <h2>Penjar fotos</h2>
+            <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+                <div class="icon">📁</div>
+                <p>Arrossega i solta les fotos aquí o fes clic per seleccionar</p>
+                <p style="font-size: 0.8rem; color: #aaa;">Formats: JPG, PNG, GIF. Màxim 10 MB per fitxer.</p>
+            </div>
+            <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.gif" style="display: none;" onchange="handleFiles(this.files)">
+            <div class="file-list" id="fileList"></div>
+            <div class="upload-actions">
+                <button class="btn btn-primary" id="uploadBtn" onclick="uploadPhotos()" disabled>Penjar fotos</button>
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="gallery-section" id="gallerySection" style="display: none;">
+            <div class="gallery-header">
+                <h2>Galeria de fotos</h2>
+                <div class="gallery-actions">
+                    <button class="btn btn-danger btn-sm" id="deleteSelectedBtn" onclick="deleteSelected()" style="display: none;">Eliminar seleccionades</button>
+                </div>
+            </div>
+            <div class="gallery-grid" id="galleryGrid"></div>
+            <div class="empty-gallery" id="emptyGallery">Selecciona una incidència per veure les seves fotos.</div>
+        </div>
+    </div>
+
+    <div class="modal" id="photoModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closePhotoModal()">&times;</button>
+            <button class="modal-nav prev" onclick="navigatePhoto(-1)">&#10094;</button>
+            <img id="modalImage" src="" alt="Foto ampliada">
+            <button class="modal-nav next" onclick="navigatePhoto(1)">&#10095;</button>
+        </div>
+    </div>
+
+    <script>
+        let incidents = {
+            "INC-20260716-0001": {
+                titol: "El servidor web no respon",
+                estat: "oberta",
+                fotos: []
+            },
+            "INC-20260716-0002": {
+                titol: "Pantalla blava a l'oficina 3B",
+                estat: "resolta",
+                fotos: [
+                    { name: "photo-001.jpg", size: 204800, url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%234361ee'/%3E%3Ctext x='50%25' y='50%25' fill='white' font-size='20' text-anchor='middle' dy='.3em'%3EPantalla blava%3C/text%3E%3C/svg%3E" },
+                    { name: "photo-002.jpg", size: 153600, url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%232a9d8f'/%3E%3Ctext x='50%25' y='50%25' fill='white' font-size='20' text-anchor='middle' dy='.3em'%3EOrdinador%3C/text%3E%3C/svg%3E" }
+                ]
+            },
+            "INC-20260717-0001": {
+                titol: "Impressora no funciona",
+                estat: "oberta",
+                fotos: [
+                    { name: "photo-001.jpg", size: 102400, url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%23e63946'/%3E%3Ctext x='50%25' y='50%25' fill='white' font-size='20' text-anchor='middle' dy='.3em'%3EImpressora%3C/text%3E%3C/svg%3E" }
+                ]
+            }
+        };
+
+        let selectedIncidentId = null;
+        let pendingFiles = [];
+        let currentPhotoIndex = -1;
+        let currentPhotos = [];
+
+        function init() {
+            populateIncidentSelect(Object.keys(incidents));
+            setupDragDrop();
+        }
+
+        function populateIncidentSelect(ids) {
+            const select = document.getElementById('incidentSelect');
+            select.innerHTML = '<option value="">-- Selecciona --</option>';
+            ids.forEach(id => {
+                const incident = incidents[id];
+                if (incident) {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = `${id} - ${incident.titol}`;
+                    select.appendChild(option);
+                }
+            });
+        }
+
+        function filterIncidents() {
+            const searchTerm = document.getElementById('incidentSearch').value.toLowerCase();
+            const filteredIds = Object.keys(incidents).filter(id => {
+                const incident = incidents[id];
+                return id.toLowerCase().includes(searchTerm) || incident.titol.toLowerCase().includes(searchTerm);
+            });
+            populateIncidentSelect(filteredIds);
+        }
+
+        function onIncidentChange() {
+            const select = document.getElementById('incidentSelect');
+            selectedIncidentId = select.value;
+
+            if (selectedIncidentId) {
+                const incident = incidents[selectedIncidentId];
+                document.getElementById('incidentInfo').innerHTML = `
+                    <strong>ID:</strong> ${selectedIncidentId}<br>
+                    <strong>Títol:</strong> ${incident.titol}<br>
+                    <strong>Estat:</strong> ${incident.estat}<br>
+                    <strong>Fotos:</strong> ${incident.fotos.length}
+                `;
+                document.getElementById('uploadSection').style.display = 'block';
+                document.getElementById('gallerySection').style.display = 'block';
+                renderGallery(selectedIncidentId);
+            } else {
+                document.getElementById('incidentInfo').textContent = 'Selecciona una incidència per gestionar les seves fotos.';
+                document.getElementById('uploadSection').style.display = 'none';
+                document.getElementById('gallerySection').style.display = 'none';
+            }
+        }
+
+        function setupDragDrop() {
+            const dropzone = document.getElementById('dropzone');
+            dropzone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropzone
+</html>

@@ -1,0 +1,14 @@
+{
+  "id": "INC-20260716-0001",
+  "titol": "El servidor web no respon",
+  "descripcio": "El servei HTTP al servidor 192.168.1.10 no respon.",
+  "data_creacio": "2026-07-16T10:30:00Z",
+  "data_resolucio": null,
+  "prioritat": 1,
+  "estat": "oberta",
+  "ubicacio": "Servidor Producció",
+  "categoria": "xarxa",
+  "proveidor_assignat": null,
+  "fotos": [],
+  "notes": []
+}
